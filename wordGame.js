@@ -779,12 +779,14 @@ function renderWordGameUI(wordObj, translations, isReintroduced = false) {
   let displayedWord = wordObj.ord.split(",")[0].trim();
   let displayedGender = wordObj.gender;
 
-  if (
-    wordObj.gender.startsWith("en") ||
-    wordObj.gender.startsWith("et") ||
-    wordObj.gender.startsWith("ei")
-  ) {
-    displayedGender = "N - " + displayedGender;
+  if (wordObj.gender.startsWith("noun")) {
+    displayedGender = "Noun";
+  } else if (wordObj.gender.startsWith("masculine")) {
+    displayedGender = "N - Masc";
+  } else if (wordObj.gender.startsWith("feminine")) {
+    displayedGender = "N - Fem";
+  } else if (wordObj.gender.startsWith("neuter")) {
+    displayedGender = "N - Neut";
   } else if (wordObj.gender.startsWith("adjective")) {
     displayedGender = "Adj";
   } else if (wordObj.gender.startsWith("adverb")) {
@@ -799,6 +801,8 @@ function renderWordGameUI(wordObj, translations, isReintroduced = false) {
     displayedGender = "Inter";
   } else if (wordObj.gender.startsWith("numeral")) {
     displayedGender = "Num";
+  } else if (wordObj.gender.startsWith("particle")) {
+    displayedGender = "Part";
   } else if (wordObj.gender.startsWith("possessive")) {
     displayedGender = "Poss";
   } else if (wordObj.gender.startsWith("preposition")) {
