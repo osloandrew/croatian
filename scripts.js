@@ -1750,140 +1750,70 @@ function getCefrColor(cefrLevel) {
   }
 }
 
-// Utility function to generate word variations for verbs ending in -ere and handle adjective/noun forms
 function generateWordVariationsForSentences(word, pos) {
-  const variations = [];
+  const variations = [word]; // Always include base form
+  const lowerWord = word.toLowerCase();
 
-  // Split the word into parts in case it's a phrase (e.g., "vedtatt sannhet")
-  const wordParts = word.split(" ");
+  // crude stem guesses
+  const stem = lowerWord.replace(/ti$/, ""); // verbs
+  const adjStem = lowerWord.replace(/(i|a|o|e)$/, ""); // adjectives
+  const nounStem = lowerWord.replace(/(a|o|e|i)$/, "");
 
-  // Handle phrases with slashes (e.g., "være/vær så snill", "logge inn/på")
-  if (word.includes("/")) {
-    // Split on the slash and create variations for both parts
-    const [firstPart, secondPart] = word.split("/");
-    const restOfPhrase = word.split(" ").slice(1).join(" "); // Get the rest of the phrase after the first word
-
-    variations.push(`${firstPart} ${restOfPhrase}`); // Add the first part with the rest of the phrase
-    variations.push(`${secondPart} ${restOfPhrase}`); // Add the second part with the rest of the phrase
-    return variations;
-  }
-
-  // Reflexive pronouns to handle reflexive verbs with variations (e.g., "seg", "deg", "meg", "oss", etc.)
-  const reflexivePronouns = ["seg", "deg", "meg", "oss", "dere"];
-
-  // If it's a single word
-  if (wordParts.length === 1) {
-    const singleWord = wordParts[0];
-    let stem = singleWord;
-    let gender = getWordGender(singleWord);
-
-    if (singleWord.length <= 2) {
-      // Handle the case where the word is too short to generate meaningful variations
-      console.warn(`Word "${singleWord}" is too short to generate variations.`);
-      variations.push(singleWord); // Just return the word as is
-      return variations;
-    }
-
-    if (pos === "noun" && gender.includes("ei")) {
-      if (singleWord.endsWith("e")) {
-        stem = singleWord.slice(0, -1); // Remove the final -e from the word
-      }
-      variations.push(
-        `${stem}`, // setning
-        `${stem}e`, // jente
-        `${stem}a`, // jenta
-        `${stem}en`, // jenten
-        `${stem}er`, // jenter
-        `${stem}ene` // jentene
-      );
-      // Handle verb variations if the word is a verb and ends with "e"
-    } else if (pos === "verb") {
-      if (singleWord.endsWith("e")) {
-        stem = singleWord.slice(0, -1); // Remove the final -e from the verb
-      }
-      variations.push(
-        `${stem}`, // imperative: anglifiser
-        `${stem}a`, // past tense: snakka
-        `${stem}e`, // infinitive: anglifisere
-        `${stem}er`, // present tense: anglifiserer
-        `${stem}es`, // passive: anglifiseres
-        `${stem}et`, // past tense: snakket
-        `${stem}r`, // present tense: bor
-        `${stem}t`, // past participle: anglifisert
-        `${stem}te` // past tense: anglifiserte
-      );
-    } else {
-      // For non-verbs, just add the word itself as a variation
-      variations.push(singleWord);
-    }
-
-    // If it's a phrase (e.g., "vedtatt sannhet"), handle each part separately
-  } else if (wordParts.length >= 2) {
-    const [firstWord, secondWord, ...restOfPhrase] = wordParts;
-    const remainingPhrase = restOfPhrase.join(" ");
-
-    // Handle reflexive verbs like "beklage seg" with variations for reflexive pronouns
-    if (reflexivePronouns.includes(secondWord)) {
-      let stem;
-      // Only remove the final 'e' if it exists; otherwise, use the full word (e.g., for "bry")
-      if (firstWord.endsWith("e")) {
-        stem = firstWord.slice(0, -1); // Remove the final -e from the verb
-      } else {
-        stem = firstWord; // Use the full word if it doesn't end with 'e'
-      }
-      // Add variations for all reflexive pronouns (seg, deg, meg, etc.)
-      reflexivePronouns.forEach((reflexive) => {
-        variations.push(
-          `${stem}e ${reflexive} ${remainingPhrase}`, // infinitive
-          `${stem}er ${reflexive} ${remainingPhrase}`, // present tense
-          `${stem}te ${reflexive} ${remainingPhrase}`, // past tense
-          `${stem}t ${reflexive} ${remainingPhrase}`, // past participle
-          `${stem}et ${reflexive} ${remainingPhrase}`, // past tense/past participle
-          `${stem}a ${reflexive} ${remainingPhrase}`, // past tense/past participle
-          `${stem} ${reflexive} ${remainingPhrase}`, // imperative
-          `${stem}es ${reflexive} ${remainingPhrase}` // passive
-        );
-      });
-    } else if (wordParts.length === 2) {
-      // Handle adjective inflection (e.g., "vedtatt" -> "vedtatte")
-      const adjectiveVariations = [firstWord, firstWord.replace(/t$/, "te")]; // Add plural/adjective form
-
-      // Handle noun pluralization (e.g., "sannhet" -> "sannheter")
-      const nounVariations = [secondWord, secondWord + "er"]; // Add plural form for nouns
-
-      // Combine all variations of adjective and noun
-      adjectiveVariations.forEach((adj) => {
-        nounVariations.forEach((noun) => {
-          variations.push(`${adj} ${noun}`);
-        });
-      });
-    } else {
-      // For other longer phrases, just return the phrase as is
-      variations.push(word);
-    }
+  if (pos === "noun") {
+    // masculine/feminine/neuter endings
+    variations.push(
+      nounStem + "a",
+      nounStem + "e",
+      nounStem + "i",
+      nounStem + "u",
+      nounStem + "om",
+      nounStem + "em",
+      nounStem + "ama",
+      nounStem + "ima",
+      nounStem + "ovi",
+      nounStem + "evima"
+    );
+  } else if (pos === "verb") {
+    // infinitive already included
+    variations.push(
+      stem + "m", // 1sg present
+      stem + "š", // 2sg present
+      stem, // 3sg present often bare
+      stem + "mo", // 1pl
+      stem + "te", // 2pl
+      stem + "ju", // 3pl
+      stem + "e", // alt 3pl
+      stem + "o", // past masc
+      stem + "la", // past fem
+      stem + "li", // past pl
+      stem + "j", // imperative sg
+      stem + "jte" // imperative pl
+    );
+    // add future (periphrastic)
+    variations.push(
+      word + " ću",
+      word + " ćeš",
+      word + " će",
+      word + " ćemo",
+      word + " ćete",
+      word + " će"
+    );
+  } else if (pos === "adjective") {
+    variations.push(
+      adjStem + "i",
+      adjStem + "a",
+      adjStem + "e",
+      adjStem + "og",
+      adjStem + "oj",
+      adjStem + "ome",
+      adjStem + "ima"
+    );
   } else {
-    // Add the original phrase as a variation (no transformation needed for long phrases)
+    // fallback: just return base
     variations.push(word);
   }
 
-  return variations;
-}
-
-// Render a single sentence
-function renderSentence(sentenceResult) {
-  // Split the example by common sentence delimiters (period, question mark, exclamation mark)
-  const sentences = sentenceResult.eksempel.split(/(?<=[.!?])\s+/);
-
-  // Get the first sentence from the array
-  const firstSentence = sentences[0];
-
-  const sentenceHTML = `
-        <div class="definition">
-            <p class="sentence">${firstSentence}</p>
-        </div>
-    `;
-
-  document.getElementById("results-container").innerHTML = sentenceHTML;
+  return [...new Set(variations)]; // remove duplicates
 }
 
 function renderSentenceMatchesFromCorpus(rows, query) {
@@ -2222,7 +2152,8 @@ function fetchAndRenderSentences(word, pos, showEnglish = true) {
         pos === "conjunction" ||
         pos === "preposition" ||
         pos === "interjection" ||
-        pos === "numeral"
+        pos === "numeral" ||
+        pos === "particle"
       ) {
         const regex = new RegExp(`(^|\\s)${variation}($|[\\s.,!?;])`, "gi");
         return regex.test(r.eksempel);
