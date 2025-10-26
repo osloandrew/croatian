@@ -163,7 +163,7 @@ function clearInput() {
 async function fetchAndLoadDictionaryData() {
   try {
     console.log("Attempting to load data from local CSV file...");
-    const localResponse = await fetch("thaiWords.csv");
+    const localResponse = await fetch("croatianWords.csv");
     if (!localResponse.ok)
       throw new Error(`HTTP error! Status: ${localResponse.status}`);
     const localData = await localResponse.text();
@@ -437,7 +437,7 @@ async function randomWord() {
   }
 
   if (type === "sentences") {
-    // Split the Thai and English sentences
+    // Split the Croatian and English sentences
     const sentences = randomResult.eksempel.split(/(?<=[.!?])\s+/); // Split by sentence delimiters
     const translations = randomResult.sentenceTranslation
       ? randomResult.sentenceTranslation.split(/(?<=[.!?])\s+/)
@@ -614,13 +614,15 @@ async function search(queryOverride = null) {
     if (!query) {
       matchingResults = storyResults;
     } else {
-      // Filter stories based on the query in both 'titleThai' and 'titleEnglish'
+      // Filter stories based on the query in both 'titleCroatian' and 'titleEnglish'
       matchingResults = storyResults.filter((story) => {
-        const thaiTitleMatch = story.titleThai.toLowerCase().includes(query);
+        const croatianTitleMatch = story.titleCroatian
+          .toLowerCase()
+          .includes(query);
         const englishTitleMatch = story.titleEnglish
           .toLowerCase()
           .includes(query);
-        return thaiTitleMatch || englishTitleMatch;
+        return croatianTitleMatch || englishTitleMatch;
       });
     }
 
@@ -769,7 +771,7 @@ async function search(queryOverride = null) {
     if (matchingResults.length === 1) {
       // Update URL and title for a single result
       const singleResult = matchingResults[0];
-      updateURL(null, type, selectedPOS, null, singleResult.ord); // Set word parameter with the result's Thai term
+      updateURL(null, type, selectedPOS, null, singleResult.ord); // Set word parameter with the result's Croatian term
       // Display this single result directly
       displaySearchResults([singleResult]); // Display only this single result
       hideSpinner(); // Hide the spinner
@@ -894,7 +896,7 @@ async function search(queryOverride = null) {
     matchingResults = matchingResults.sort((a, b) => {
       const queryLower = query.toLowerCase();
 
-      // 1. Prioritize exact match in the Thai or English term
+      // 1. Prioritize exact match in the Croatian or English term
       const isExactMatchA =
         a.ord
           .toLowerCase()
@@ -920,7 +922,7 @@ async function search(queryOverride = null) {
         return 1;
       }
 
-      // 2. Prioritize by CEFR level if both English translations or Thai words are identical
+      // 2. Prioritize by CEFR level if both English translations or Croatian words are identical
       const cefrOrder = { A1: 1, A2: 2, B1: 3, B2: 4, C: 5 };
       const aCEFRValue = cefrOrder[a.CEFR] || 99; // Use high default if CEFR is missing
       const bCEFRValue = cefrOrder[b.CEFR] || 99;
@@ -948,7 +950,7 @@ async function search(queryOverride = null) {
         }
       }
 
-      // Check for identical Thai words
+      // Check for identical Croatian words
       if (a.ord.toLowerCase() === b.ord.toLowerCase()) {
         if (aCEFRValue !== bCEFRValue) {
           return aCEFRValue - bCEFRValue; // Lower CEFR value appears first
@@ -1659,7 +1661,7 @@ function displaySearchResults(results, query = "") {
   }
 }
 
-// Function to toggle the visibility of English sentences and update Thai box styles
+// Function to toggle the visibility of English sentences and update Croatian box styles
 function toggleEnglishTranslations(wordId = null) {
   // Determine if wordId is a button element
   const isButton = wordId instanceof HTMLElement;
@@ -1680,7 +1682,7 @@ function toggleEnglishTranslations(wordId = null) {
   const englishSentenceDivs = wordId
     ? sentenceContainer.querySelectorAll(".sentence-box-english")
     : document.querySelectorAll(".sentence-box-english"); // Global if no wordId
-  const thaiSentenceDivs = wordId
+  const croatianSentenceDivs = wordId
     ? sentenceContainer.querySelectorAll(".sentence-box-norwegian")
     : document.querySelectorAll(".sentence-box-norwegian"); // Global if no wordId
 
@@ -1702,7 +1704,7 @@ function toggleEnglishTranslations(wordId = null) {
     div.classList.toggle("hidden", !isEnglishVisible);
   });
 
-  thaiSentenceDivs.forEach((div) => {
+  croatianSentenceDivs.forEach((div) => {
     div.classList.toggle("sentence-box-norwegian-hidden", !isEnglishVisible);
   });
 
@@ -1955,7 +1957,7 @@ function renderSentenceMatchesFromCorpus(rows, query) {
   document.getElementById("results-container").innerHTML = html;
 }
 
-// Highlight search query in text, accounting for Thai characters (å, æ, ø) and verb variations
+// Highlight search query in text, accounting for Croatian characters (å, æ, ø) and verb variations
 function highlightQuery(sentence, query) {
   if (!query) return sentence; // If no query, return sentence as is.
 
@@ -1965,9 +1967,12 @@ function highlightQuery(sentence, query) {
     "$1"
   );
 
-  // Define a regex pattern that includes Thai characters and dynamically inserts the query
-  const thaiLetters = "[\\wåæøÅÆØ]"; // Include Thai letters in the pattern
-  const regex = new RegExp(`(${thaiLetters}*${query}${thaiLetters}*)`, "gi");
+  // Define a regex pattern that includes Croatian characters and dynamically inserts the query
+  const croatianLetters = "[\\wåæøÅÆØ]"; // Include Croatian letters in the pattern
+  const regex = new RegExp(
+    `(${croatianLetters}*${query}${croatianLetters}*)`,
+    "gi"
+  );
 
   // Highlight all occurrences of the query in the sentence
   cleanSentence = cleanSentence.replace(
@@ -1980,7 +1985,7 @@ function highlightQuery(sentence, query) {
 
   // Highlight each query variation in the sentence
   queries.forEach((q) => {
-    // Define a regex pattern that includes Thai characters and dynamically inserts the query
+    // Define a regex pattern that includes Croatian characters and dynamically inserts the query
     const regex = new RegExp(`(\\b${q}\\b|\\b${q}(?![\\wåæøÅÆØ]))`, "gi");
 
     // Highlight all occurrences of the query variation in the sentence
@@ -2007,8 +2012,8 @@ function highlightQuery(sentence, query) {
 
   // Apply highlighting for all word variations in sequence
   wordVariations.forEach((variation) => {
-    const thaiWordBoundary = `\\b${variation}\\b`;
-    const regex = new RegExp(thaiWordBoundary, "gi");
+    const croatianWordBoundary = `\\b${variation}\\b`;
+    const regex = new RegExp(croatianWordBoundary, "gi");
     cleanSentence = cleanSentence.replace(
       regex,
       '<span style="color: #3c88d4;">$&</span>'
@@ -2044,9 +2049,9 @@ function renderSentencesHTML(sentenceResults, wordVariations) {
 
         if (matchedVariation) {
           // Use a regular expression to match the full word containing any of the variations
-          const thaiPattern = "[\\wåæøÅÆØ]"; // Pattern including Thai letters
+          const croatianPattern = "[\\wåæøÅÆØ]"; // Pattern including Croatian letters
           const regex = new RegExp(
-            `(${thaiPattern}*${matchedVariation}${thaiPattern}*)`,
+            `(${croatianPattern}*${matchedVariation}${croatianPattern}*)`,
             "gi"
           );
 
@@ -2525,7 +2530,7 @@ function updateURL(query, type, selectedPOS, story = null, word = null) {
   // Set the word parameter if a specific word entry is clicked
   if (word) {
     url.searchParams.set("word", word);
-    document.title = `${word} - Thai Dictionary`; // Set title to the word
+    document.title = `${word} - Croatian Dictionary`; // Set title to the word
     // Update the URL without reloading the page
     window.history.pushState({}, "", url);
     return; // Stop further execution to keep this title
@@ -2533,15 +2538,15 @@ function updateURL(query, type, selectedPOS, story = null, word = null) {
 
   // Update the page title based on the context, if no specific word is provided
   if (story) {
-    document.title = `${decodeURIComponent(story)} - Thai Story`;
+    document.title = `${decodeURIComponent(story)} - Croatian Story`;
   } else if (query) {
     document.title = `${query} - ${capitalizeType(
       type
-    )} Search - Thai Dictionary`;
+    )} Search - Croatian Dictionary`;
   } else if (type) {
-    document.title = `${capitalizeType(type)} - Thai Dictionary`;
+    document.title = `${capitalizeType(type)} - Croatian Dictionary`;
   } else {
-    document.title = "Thai Dictionary";
+    document.title = "Croatian Dictionary";
   }
 
   // Update the URL without reloading the page
@@ -2578,7 +2583,7 @@ function loadStateFromURL() {
 
   // If there's a story in the URL, display that story and exit
   if (storyTitle) {
-    document.title = `${decodeURIComponent(storyTitle)} - Thai Story`;
+    document.title = `${decodeURIComponent(storyTitle)} - Croatian Story`;
     displayStory(decodeURIComponent(storyTitle)); // Display the specific story
     return; // Exit function as story is being displayed
   }
@@ -2589,7 +2594,7 @@ function loadStateFromURL() {
       // Check if dictionary data is loaded
       if (word) {
         // Set title to the word
-        document.title = `${word} - Thai Dictionary`;
+        document.title = `${word} - Croatian Dictionary`;
         showLandingCard(false);
         resultsContainer.innerHTML = "";
 
@@ -2619,7 +2624,7 @@ function loadStateFromURL() {
       if (query) {
         search();
       } else if (type === "words") {
-        document.title = "Thai Dictionary | Search in Thai or English";
+        document.title = "Croatian Dictionary | Search in Croatian or English";
         clearContainer();
         showLandingCard(true);
       }
