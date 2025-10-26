@@ -9,6 +9,7 @@ astronomy,B2,feminine,astronomija,X,,X,Astronomija proučava zvijezde i planete 
 car,A1,masculine,auto,X,,X,Auto je nov i brz.,The car is new and fast.
 "automobile, car",A2,masculine,automobil,X,,X,Automobil stoji ispred kuće.,The automobile is standing in front of the house.
 grandmother,A1,feminine,baka,X,,X,Moja baka plete.,My grandmother is knitting.
+banana,A1,feminine,banana,X,,X,Banana je žuta.,The banana is yellow.
 bank,A1,feminine,banka,X,,X,Banka je zatvorena.,The bank is closed.
 white,A1,adjective,bijel,X,,X,Mačka je bijela.,The cat is white.
 biologist,B2,masculine,biolog,X,,X,Biolog istražuje životinje u šumi.,The biologist researches animals in the forest.
@@ -23,12 +24,15 @@ hospital,A1,feminine,bolnica,X,,X,Bolnica je velika.,The hospital is big.
 brother,A1,masculine,brat,X,,X,Moj brat je u školi.,My brother is at school.
 "fast, quick",A2,adjective,brz,X,,X,Automobil je brz i moderan.,The car is fast and modern.
 tea,A1,masculine,čaj,X,,X,Volim piti čaj ujutro.,I like to drink tea in the morning.
+"wait, await",A1,verb,čekati,X,,X,Moram čekati autobus.,I have to wait for the bus.
 road,A2,feminine,cesta,X,,X,Naša kuća je blizu glavne ceste.,Our house is near the main road.
 often,A1,adverb,često,X,,X,On često gleda televiziju navečer.,He often watches television in the evening.
 four,A1,numeral,četiri,X,,X,Imam četiri knjige.,I have four books.
 Thursday,A1,masculine,četvrtak,X,,X,Četvrtak je moj omiljeni dan.,Thursday is my favorite day.
 read,A1,verb,čitati,X,,X,Volim čitati knjige.,I like to read books.
+chocolate,A1,feminine,čokolada,X,,X,Volim čokoladu.,I love chocolate.
 "person, man",A1,masculine,čovjek,X,,X,Čovjek stoji na ulici.,The man is standing on the street.
+church,A1,feminine,crkva,X,,X,Crkva je stara.,The church is old.
 black,A1,adjective,crn,X,,X,Automobil je crn.,The car is black.
 red,A1,adjective,crven,X,,X,Balon je crven.,The balloon is red.
 hear,A1,verb,čuti,X,,X,Mogu dobro čuti ovaj glas.,I can hear this voice well.
@@ -53,6 +57,9 @@ good day,A1,interjection,dobar dan,X,,X,"Dobar dan, gospođo.","Good day, madam.
 good evening,A1,interjection,dobra večer,X,,X,"Dobra večer, prijatelji.","Good evening, friends."
 good morning,A1,interjection,dobro jutro,X,,X,"Dobro jutro, tata.","Good morning, dad."
 come,A1,verb,doći,X,,X,On će doći sutra.,He will come tomorrow.
+"while, as long as",A2,conjunction,dok,X,,X,Pričaj dok ja kuham večeru.,Talk while I cook dinner.
+doctor,A1,masculine,doktor,X,,X,Doktor radi u bolnici.,The doctor works in the hospital.
+bring,B1,verb,donijeti,X,,X,On će donijeti knjige u školu.,He will bring the books to school.
 "second, other",A1,adjective,drugi,X,,X,Ovo je moj drugi auto.,This is my second car.
 society,B2,neuter,društvo,X,,X,Društvo se brzo mijenja zbog novih tehnologija.,Society is changing quickly because of new technologies.
 hold,A2,verb,držati,X,,X,On zna držati bebu u rukama.,He knows how to hold a baby in his arms.
@@ -60,9 +67,12 @@ hold,A2,verb,držati,X,,X,On zna držati bebu u rukama.,He knows how to hold a b
 "store, shop",A2,masculine,dućan,X,,X,Dućan je otvoren svako jutro.,The shop is open every morning.
 long,A1,adjective,dug,X,,X,Imam dug stol u kuhinji.,I have a long table in the kitchen.
 two,A1,numeral,dva,X,,X,Imam dva psa.,I have two dogs.
+physics,B1,feminine,fizika,X,,X,Fizika objašnjava zakone prirode.,Physics explains the laws of nature.
 where,A1,adverb,gdje,X,,X,Gdje je škola?,Where is the school?
 hungry,A1,adjective,gladan,X,,X,Dječak je gladan i jede kruh.,The boy is hungry and eating bread.
+"voice, vote",A2,masculine,glas,X,,X,Njegov glas je vrlo jak.,His voice is very strong.
 head,A1,feminine,glava,X,,X,Glava me boli.,My head hurts.
+music,A1,feminine,glazba,X,,X,Glazba je glasna.,The music is loud.
 "watch, look at",A1,verb,gledati,X,,X,Djeca gledaju televiziju.,The children are watching television.
 year,A1,feminine,godina,X,,X,Imam dvadeset godina.,I am twenty years old.
 "lord, master",B2,masculine,gospodar,X,,X,Gospodar dvorca imao je mnogo slugu.,The lord of the castle had many servants.
@@ -70,8 +80,10 @@ manage,B2,verb,gospodariti,X,,X,Poljoprivrednici gospodarili su zemljom generaci
 economy,B2,neuter,gospodarstvo,X,,X,Hrvatsko gospodarstvo raste zahvaljujući turizmu.,The Croatian economy is growing thanks to tourism.
 speak,A1,verb,govoriti,X,,X,Govoriš li engleski?,Do you speak English?
 "city, town",A1,masculine,grad,X,,X,Grad je velik.,The city is big.
+thousand,B1,numeral,hiljada,X,,X,Na koncertu je bilo više od hiljadu ljudi.,There were more than a thousand people at the concert.
 cold,A1,adjective,hladan,X,,X,Zrak je hladan.,The air is cold.
 walk,A1,verb,hodati,X,,X,Volim hodati po parku.,I like to walk in the park.
+hotel,A1,masculine,hotel,X,,X,Hotel je velik.,The hotel is big.
 food,A1,feminine,hrana,X,,X,Hrana je na stolu.,The food is on the table.
 Croatian,A1,masculine,hrvatski,X,,X,Hrvatski je moj jezik.,Croatian is my language.
 Croatian,A1,adjective,hrvatski,X,,X,Ona je hrvatski učitelj.,She is a Croatian teacher.
@@ -81,6 +93,7 @@ and,A1,conjunction,i,X,,X,Kupujem jabuku i bananu.,I’m buying an apple and a b
 go,A1,verb,ići,X,,X,Idem kući.,I am going home.
 or,A1,conjunction,ili,X,,X,Piješ vodu ili sok?,Do you drink water or juice?
 have,A1,verb,imati,X,,X,Imam dvije sestre.,I have two sisters.
+internet,A1,masculine,internet,X,,X,Internet je brz.,The internet is fast.
 "research, investigation",C,neuter,istraživanje,X,,X,Istraživanje je pokazalo nove podatke o bolesti.,The research showed new data about the disease.
 I,A1,pronoun,ja,X,,X,Ja idem u školu.,I go to school.
 apple,A1,feminine,jabuka,X,,X,Jabuka je crvena.,The apple is red.
@@ -89,7 +102,9 @@ one,A1,numeral,jedan,X,,X,Imam jedan stol.,I have one table.
 cheap,A2,adjective,jeftin,X,,X,Ova knjiga je jeftina.,This book is cheap.
 because,A1,conjunction,jer,X,,X,"Ne idem van, jer pada kiša.","I’m not going outside, because it’s raining."
 eat,A1,verb,jesti,X,,X,On jede kruh.,He is eating bread.
+lake,A2,neuter,jezero,X,,X,Jezero je veliko i duboko.,The lake is big and deep.
 "language, tongue",A1,masculine,jezik,X,,X,Hrvatski je moj jezik.,Croatian is my language.
+"more, still",A1,adverb,još,X,,X,Imam još jednu knjigu.,I have another book.
 yesterday,A1,adverb,jučer,X,,X,Jučer sam bio u Zagrebu.,Yesterday I was in Zagreb.
 soup,A1,feminine,juha,X,,X,Za večeru jedem juhu.,For dinner I eat soup.
 this morning,A2,adverb,jutros,X,,X,Jutros sam vidio dugu na nebu.,This morning I saw a rainbow in the sky.
@@ -98,6 +113,7 @@ when,A1,conjunction,"kad, kada",X,,X,Kad ideš kući?,When are you going home?
 how,A1,adverb,kako,X,,X,Kako se zoveš?,What is your name?
 coffee,A1,feminine,kava,X,,X,Ujutro pijem kavu.,In the morning I drink coffee.
 tell,A2,verb,kazati,X,,X,Želim ti kazati jednu tajnu.,I want to tell you a secret.
+chemistry,B1,feminine,kemija,X,,X,Kemija je važna za medicinu.,Chemistry is important for medicine.
 umbrella,A2,masculine,kišobran,X,,X,Moj kišobran je crven i velik.,My umbrella is red and big.
 book,A1,feminine,knjiga,X,,X,Knjiga je na stolu.,The book is on the table.
 "how much, how many",A1,adverb,koliko,X,,X,Koliko košta ta knjiga?,How much does that book cost?
@@ -106,6 +122,7 @@ short,A1,adjective,kratak,X,,X,Ovo je kratak film.,This is a short film.
 bed,A1,masculine,krevet,X,,X,Krevet je mekan.,The bed is soft.
 bread,A1,masculine,kruh,X,,X,Kruh je svjež.,The bread is fresh.
 house,A1,feminine,kuća,X,,X,Moja kuća je mala.,My house is small.
+culture,B1,feminine,kultura,X,,X,Kultura povezuje ljude različitih naroda.,Culture connects people of different nations.
 "customer, buyer",A2,masculine,kupac,X,,X,U trgovini je kupac pitao za cijenu kruha.,In the shop a customer asked about the price of bread.
 buy,A1,verb,kupiti,X,,X,Želim kupiti kruh.,I want to buy bread.
 "easy, light",A2,adjective,lak,X,,X,Zadatak je lak za učenike.,The task is easy for the students.
@@ -113,6 +130,7 @@ good night,A1,interjection,laku noć,X,,X,"Laku noć, djeco.","Good night, child
 doctor,A2,masculine,liječnik,X,,X,Liječnik radi u bolnici.,The doctor works in the hospital.
 medicine,A2,masculine,lijek,X,,X,Ovaj lijek pomaže kod prehlade.,This medicine helps with a cold.
 "nice, pretty",A1,adjective,lijep,X,,X,To je lijep grad.,That is a pretty city.
+lemon,A1,masculine,limun,X,,X,Limun je kiseo.,The lemon is sour.
 June,A1,masculine,lipanj,X,,X,Lipanj je ljetni mjesec.,June is a summer month.
 October,A1,masculine,listopad,X,,X,Listopad je jesenski mjesec.,October is an autumn month.
 pharmacy,A2,feminine,ljekarna,X,,X,Ljekarna je blizu škole.,The pharmacy is near the school.
@@ -123,6 +141,8 @@ bad,A1,adjective,loš,X,,X,To je loš film.,That is a bad film.
 cat,A1,feminine,mačka,X,,X,Mačka spava na stolici.,The cat is sleeping on the chair.
 mother,A1,feminine,majka,X,,X,Moja majka kuha ručak.,My mother cooks lunch.
 "small, little",A1,adjective,mali,X,,X,Mali pas laje.,The small dog is barking.
+butter,A2,masculine,maslac,X,,X,Maslac je na kruhu.,The butter is on the bread.
+mathematics,A1,feminine,matematika,X,,X,Matematika je teška.,Mathematics is hard.
 meat,A1,neuter,meso,X,,X,Meso je na tanjuru.,The meat is on the plate.
 we,A1,pronoun,mi,X,,X,Mi živimo u Zagrebu.,We live in Zagreb.
 minute,A1,feminine,minuta,X,,X,Čekaj pet minuta.,Wait five minutes.
@@ -137,8 +157,10 @@ my,A1,adjective,moj,X,,X,Moj auto je star.,My car is old.
 "please, you're welcome, you are welcome",A1,interjection,molim,X,,X,"Molim, daj mi kruh.","Please, give me bread."
 sea,A1,neuter,more,X,,X,More je plavo.,The sea is blue.
 bridge,A1,masculine,most,X,,X,Grad ima veliki most.,The city has a big bridge.
+maybe,A2,adverb,možda,X,,X,Možda ću ići sutra u kino.,Maybe I will go to the cinema tomorrow.
 man,A1,masculine,muškarac,X,,X,Muškarac sjedi u parku.,The man is sitting in the park.
 "husband, man",A1,masculine,muž,X,,X,Moj muž radi u uredu.,My husband works in an office.
+music,A1,feminine,muzika,X,,X,Muzika je lijepa.,The music is beautiful.
 nation,B2,feminine,nacija,X,,X,Nacija je bila ponosna na svoj uspjeh.,The nation was proud of its success.
 "nationalize, nationalise",C,verb,nacionalizirati,X,,X,Država je odlučila nacionalizirati nekoliko privatnih poduzeća zbog gospodarske krize.,The state decided to nationalize several private companies because of the economic crisis.
 national,B1,adjective,nacionalni,X,,X,Danas je državni praznik i to je važan nacionalni dan.,Today is a public holiday and it is an important national day.
@@ -148,6 +170,7 @@ our,A1,adjective,naš,X,,X,Naš stan je velik.,Our apartment is big.
 no,A1,interjection,ne,X,,X,"Ne, ne želim sok.","No, I don’t want juice."
 Sunday,A1,feminine,nedjelja,X,,X,Nedjelja je dan odmora.,Sunday is a day of rest.
 "shortage, defect",B2,masculine,nedostatak,X,,X,Glavni nedostatak ovog posla je mala plaća.,The main disadvantage of this job is the low salary.
+than,B1,conjunction,nego,X,,X,Bolje je učiti nego spavati.,It is better to study than to sleep.
 something,A1,pronoun,nešto,X,,X,U vrećici imam nešto.,I have something in the bag.
 "someone, somebody",A1,pronoun,netko,X,,X,Netko kuca na vrata.,Someone is knocking at the door.
 nowhere,A2,adverb,nigdje,X,,X,Nisam našao ključeve nigdje u stanu.,I didn’t find the keys anywhere in the apartment.
@@ -163,6 +186,7 @@ new,A1,adjective,nov,X,,X,To je nov stan.,That is a new apartment.
 money,A1,masculine,novac,X,,X,Imam novac u džepu.,I have money in my pocket.
 newspaper,A1,feminine,novine,X,,X,Čitam novine svako jutro.,I read the newspaper every morning.
 news,B1,feminine,novost,X,,X,Ova novost se brzo proširila po gradu.,This news spread quickly through the city.
+knife,A1,masculine,nož,X,,X,Nož je na stolu.,The knife is on the table.
 zero,A1,numeral,nula,X,,X,Na papiru je nula.,There is a zero on the paper.
 family,A1,feminine,obitelj,X,,X,Moja obitelj živi u Zagrebu.,My family lives in Zagreb.
 answer,A1,masculine,odgovor,X,,X,Imam jedan točan odgovor.,I have one correct answer.
@@ -182,6 +206,7 @@ they,A1,pronoun,oni,X,,X,Oni su studenti.,They are students.
 it,A1,pronoun,ono,X,,X,Ono je selo.,That is a village.
 again,A1,adverb,opet,X,,X,"Pročitaj knjigu, pa je pročitaj opet.","Read the book, then read it again."
 eight,A1,numeral,osam,X,,X,Imam osam jabuka.,I have eight apples.
+"stay, remain",B1,verb,ostati,X,,X,On želi ostati kod kuće.,He wants to stay at home.
 father,A1,masculine,otac,X,,X,Moj otac radi u banci.,My father works in a bank.
 leave,A2,verb,otići,X,,X,On mora otići kući prije osam.,He must go home before eight.
 open,A2,verb,otvoriti,X,,X,"Možeš li otvoriti prozor, vruće je?","Can you open the window, it’s hot?"
@@ -190,7 +215,11 @@ here,A1,adverb,ovdje,X,,X,Moja torba je ovdje.,My bag is here.
 March,A1,masculine,ožujak,X,,X,Ožujak je proljetni mjesec.,March is a spring month.
 "so, then",A2,conjunction,pa,X,,X,"Bila je gužva, pa smo zakasnili.","There was a crowd, so we were late."
 smart,A2,adjective,pametan,X,,X,Moj pas je pametan i brzo uči.,My dog is smart and learns quickly.
+tomato,A2,masculine,paradajz,X,,X,Kupio sam svjež paradajz na tržnici.,I bought fresh tomatoes at the market.
+park,A1,masculine,park,X,,X,Park je zelen.,The park is green.
 dog,A1,masculine,pas,X,,X,Pas trči po dvorištu.,The dog is running in the yard.
+"fall, fail",A2,verb,pasti,X,,X,On može pasti s bicikla.,He can fall off the bike.
+bakery,A2,feminine,pekara,X,,X,Pekara je otvorena ujutro.,The bakery is open in the morning.
 five,A1,numeral,pet,X,,X,Pet djece je u parku.,Five children are in the park.
 Friday,A1,masculine,petak,X,,X,Petak je zadnji dan u tjednu.,Friday is the last day of the week.
 drink,A1,neuter,piće,X,,X,Na stolu je jedno hladno piće.,There is a cold drink on the table.
@@ -203,7 +232,9 @@ beer,A1,neuter,pivo,X,,X,Pivo je hladno.,The beer is cold.
 mountain,A2,feminine,planina,X,,X,Planina je visoka i hladna.,The mountain is high and cold.
 "blue, light blue",A1,adjective,plav,X,,X,Plav je moj omiljeni kaput.,Blue is my favorite coat.
 "start, begin",A2,verb,početi,X,,X,Sutra ću početi čitati novu knjigu.,Tomorrow I will start reading a new book.
+floor,A2,masculine,pod,X,,X,Ispod stola je pod hladan.,Under the table the floor is cold.
 "mistake, error",B1,feminine,pogreška,X,,X,To je bila velika pogreška.,That was a big mistake.
+politics,B1,feminine,politika,X,,X,Politika utječe na cijelo društvo.,Politics influences the whole society.
 Monday,A1,masculine,ponedjeljak,X,,X,Ponedjeljak je prvi dan u tjednu.,Monday is the first day of the week.
 sometimes,A1,conjunction,ponekad,X,,X,"Volim more, ali ponekad idem u planine.","I love the sea, but sometimes I go to the mountains."
 "job, mission",A1,masculine,posao,X,,X,Moj posao je u gradu.,My job is in the city.
@@ -217,6 +248,7 @@ represent,B1,verb,predstavljati,X,,X,On često predstavlja svoju školu na natje
 representative,B2,masculine,predstavnik,X,,X,Predstavnik učenika govorio je na sastanku škole.,The student representative spoke at the school meeting.
 "assumption, supposition",C,feminine,pretpostavka,X,,X,Njihova pretpostavka temelji se na starim informacijama.,Their assumption is based on old information.
 friend,A1,masculine,prijatelj,X,,X,Moj prijatelj živi u Splitu.,My friend lives in Split.
+program,B1,masculine,program,X,,X,TV program počinje u osam sati.,The TV program starts at eight o’clock.
 December,A1,masculine,prosinac,X,,X,Prosinac je zimski mjesec.,December is a winter month.
 "previous, last",A1,adjective,prošli,X,,X,To je moj prošli stan.,That is my former apartment.
 window,A1,masculine,prozor,X,,X,Prozor je otvoren.,The window is open.
@@ -226,9 +258,13 @@ way,A1,masculine,put,X,,X,Ovo je put do škole.,This is the way to school.
 "check, calculation, account",A1,masculine,račun,X,,X,Račun je na stolu.,The bill is on the table.
 computer,A2,neuter,računalo,X,,X,Računalo je na stolu u mojoj sobi.,The computer is on the table in my room.
 calculate,A2,verb,računati,X,,X,Moram računati novac prije kupnje.,I have to count the money before buying.
+radio,A1,masculine,radio,X,,X,Radio svira pjesmu.,The radio is playing a song.
 work,A1,verb,raditi,X,,X,On radi u školi.,He works in a school.
 "act, action, store, shop",B1,feminine,radnja,X,,X,Radnja filma je zanimljiva i napeta.,The plot of the film is interesting and exciting.
 look forward to,B1,expression,radovati se,X,,X,Radujem se tvojem dolasku idući tjedan.,I’m looking forward to your arrival next week.
+"heaven, paradise",B1,masculine,raj,X,,X,Za neke ljude raj je duhovno mjesto mira.,For some people paradise is a spiritual place of peace.
+tomato,A2,masculine,rajčica,X,,X,Rajčica je crvena i slatka.,The tomato is red and sweet.
+heavenly,B2,adjective,rajski,X,,X,Plaža je imala rajski pogled na more i planine.,The beach had a heavenly view of the sea and the mountains.
 war,A2,masculine,rat,X,,X,Rat donosi mnogo tuge.,War brings much sorrow.
 "examine, consider",C,verb,razmatrati,X,,X,Moramo razmatrati sve mogućnosti prije odluke.,We must consider all possibilities before the decision.
 understand,A1,verb,razumjeti,X,,X,Ne razumijem pitanje.,I don’t understand the question.
@@ -236,6 +272,8 @@ say,A1,verb,reći,X,,X,Želim ti reći nešto važno.,I want to tell you somethi
 restaurant,A1,masculine,restoran,X,,X,Idemo u restoran na ručak.,We are going to a restaurant for lunch.
 fish,A1,feminine,riba,X,,X,Riba pliva u moru.,The fish swims in the sea.
 river,A2,feminine,rijeka,X,,X,Rijeka teče kroz grad.,The river flows through the city.
+rarely,B1,adverb,rijetko,X,,X,On rijetko ide u kazalište.,He rarely goes to the theater.
+rice,A1,feminine,riža,X,,X,Riža je na tanjuru.,The rice is on the plate.
 "cousin, relative",A2,masculine,rođak,X,,X,Moj rođak živi u Splitu.,My cousin lives in Split.
 parent,A2,masculine,roditelj,X,,X,Moj roditelj radi u školi.,My parent works at a school.
 laundry,B1,neuter,rublje,X,,X,Moram oprati rublje prije putovanja.,I have to wash the laundry before the trip.
@@ -247,6 +285,7 @@ self-government,C,feminine,samouprava,X,,X,Lokalna samouprava upravlja ovim podr
 sugar,A1,masculine,šećer,X,,X,Kava je slatka jer ima šećer.,The coffee is sweet because it has sugar.
 seven,A1,numeral,sedam,X,,X,Sedam dana je u tjednu.,There are seven days in a week.
 second,A2,feminine,sekunda,X,,X,Sve je trajalo samo jednu sekundu.,Everything lasted only one second.
+village,A1,neuter,selo,X,,X,Selo je malo.,The village is small.
 six,A1,numeral,šest,X,,X,U torbi je šest knjiga.,There are six books in the bag.
 sister,A1,feminine,sestra,X,,X,Moja sestra je mala.,My sister is small.
 January,A1,masculine,siječanj,X,,X,Siječanj je hladan mjesec.,January is a cold month.
@@ -260,6 +299,7 @@ listen,A1,verb,slušati,X,,X,Učenici slušaju učitelja.,The students are liste
 service,B2,feminine,služba,X,,X,Vatrogasna služba brzo je reagirala na požar.,The fire service reacted quickly to the fire.
 serve,B1,verb,služiti,X,,X,Ova posuda služi za juhu.,This bowl serves for soup.
 room,A1,feminine,soba,X,,X,Soba je mala.,The room is small.
+juice,A1,masculine,sok,X,,X,Sok je sladak.,The juice is sweet.
 salt,A1,feminine,sol,X,,X,U juhi je malo soli.,There is a little salt in the soup.
 sleep,A1,verb,spavati,X,,X,Dijete spava.,The child is sleeping.
 slow,A2,adjective,spor,X,,X,Pas je spor jer je star.,The dog is slow because it is old.
@@ -283,17 +323,22 @@ Saturday,A1,feminine,subota,X,,X,Subota je slobodan dan.,Saturday is a free day.
 sun,A1,neuter,sunce,X,,X,Sunce sja.,The sun is shining.
 tomorrow,A1,adverb,sutra,X,,X,Sutra idem u kino.,Tomorrow I am going to the cinema.
 "everything, all",A1,noun,sve,X,,X,Pojedi sve kolače.,Eat all the cakes.
+university,B1,neuter,sveučilište,X,,X,Moja sestra studira na sveučilištu u Zagrebu.,My sister studies at the university in Zagreb.
 everyone,A1,pronoun,svi,X,,X,Svi učenici su u školi.,All the students are in school.
 May,A1,masculine,svibanj,X,,X,Svibanj je cvjetni mjesec.,May is a flowery month.
 one's own,A2,adjective,svoj,X,,X,Svaki učenik ima svoj zadatak.,Each student has his own task.
 everywhere,A2,adverb,svuda,X,,X,Djeca su trčala svuda po dvorištu.,The children ran everywhere in the yard.
 that,A2,pronoun,taj,X,,X,Taj čovjek radi u banci.,That man works in a bank.
 there,A1,adverb,tamo,X,,X,Moj prijatelj živi tamo.,My friend lives there.
+"plate, dish",A1,masculine,tanjur,X,,X,Tanjur je prazan.,The plate is empty.
 "phone, telephone",A1,masculine,telefon,X,,X,Telefon je skup.,The telephone is expensive.
+television,A1,feminine,televizija,X,,X,Televizija je nova.,The television is new.
+television,A1,masculine,televizor,X,,X,Televizor je u sobi.,The TV set is in the room.
 aunt,A2,feminine,tetka,X,,X,Moja tetka je liječnica.,My aunt is a doctor.
 "difficult, heavy",A2,adjective,težak,X,,X,Matematika je težak predmet.,Mathematics is a difficult subject.
 you,A1,pronoun,ti,X,,X,Ti si moj prijatelj.,You are my friend.
 turquoise,B2,adjective,tirkizan,X,,X,More ima tirkiznu boju pod suncem.,The sea has a turquoise color under the sun.
+thousand,A2,numeral,tisuća,X,,X,Na koncertu je bilo tisuću ljudi.,There were a thousand people at the concert.
 week,A1,masculine,tjedan,X,,X,Tjedan ima sedam dana.,A week has seven days.
 who,A1,pronoun,tko,X,,X,Tko je to?,Who is that?
 warm,A1,adjective,topao,X,,X,Dan je topao.,The day is warm.
@@ -309,13 +354,16 @@ market,A2,feminine,tržnica,X,,X,Tržnica je puna svježeg voća i povrća.,The 
 sad,A1,adjective,tužan,X,,X,On je tužan danas.,He is sad today.
 your,A1,adjective,tvoj,X,,X,Tvoj brat je ovdje.,Your brother is here.
 "in, at",A1,preposition,u,X,,X,U kući je pas.,There is a dog in the house.
+"school, institute",B1,neuter,učilište,X,,X,Ovo učilište nudi tečajeve jezika.,This institute offers language courses.
 "do, make",B1,verb,učiniti,X,,X,Ne znam što mogu učiniti da ti pomognem.,I don’t know what I can do to help you.
 teacher,A1,masculine,učitelj,X,,X,Učitelj pita učenike.,The teacher is asking the students.
 "learn, study",A1,verb,učiti,X,,X,Učim hrvatski.,I am learning Croatian.
 ear,A1,neuter,uho,X,,X,Uho je malo.,The ear is small.
 "uncle, maternal uncle",A2,masculine,ujak,X,,X,Moj ujak vozi autobus.,My uncle drives a bus.
 street,A1,feminine,ulica,X,,X,Ulica je duga.,The street is long.
+oil,A2,neuter,ulje,X,,X,Ulje je u boci.,The oil is in the bottle.
 tired,A1,adjective,umoran,X,,X,On je umoran i ide spavati.,He is tired and going to sleep.
+university,B1,masculine,univerzitet,X,,X,Univerzitet ima mnogo fakulteta.,The university has many faculties.
 just,B1,adverb,upravo,X,,X,On je upravo izašao iz kuće.,He has just left the house.
 influence,B2,masculine,utjecaj,X,,X,Internet ima snažan utjecaj na mlade ljude.,The Internet has a strong influence on young people.
 Tuesday,A1,masculine,utorak,X,,X,Utorak je drugi dan u tjednu.,Tuesday is the second day of the week.
@@ -329,6 +377,7 @@ fire,A1,feminine,vatra,X,,X,Vatra je topla.,The fire is warm.
 February,A1,feminine,veljača,X,,X,Veljača je kratak mjesec.,February is a short month.
 you,A1,pronoun,vi,X,,X,Vi ste moji susjedi.,You are my neighbors.
 see,A1,verb,vidjeti,X,,X,Vidim autobus.,I see a bus.
+fork,A2,feminine,vilica,X,,X,Vilica je pored tanjura.,The fork is next to the plate.
 wine,A1,neuter,vino,X,,X,Vino je crveno.,The wine is red.
 tall,A1,adjective,visok,X,,X,Ivan je visok čovjek.,Ivan is a tall man.
 government,A2,feminine,vlada,X,,X,Vlada donosi zakone.,The government makes laws.
@@ -353,7 +402,9 @@ green,A1,adjective,zelen,X,,X,Zelen list je na drvetu.,A green leaf is on the tr
 want,A1,verb,želeti,X,,X,Želim vodu.,I want water.
 "land, country",A1,feminine,zemlja,X,,X,Zemlja je okrugla.,The Earth is round.
 "woman, wife",A1,feminine,žena,X,,X,Žena kuha juhu.,The woman is cooking soup.
+wall,A1,masculine,zid,X,,X,Zid je bijel.,The wall is white.
 live,A1,verb,živjeti,X,,X,Oni žele živjeti u velikom gradu.,They want to live in a big city.
+spoon,A2,feminine,žlica,X,,X,Juha se jede žlicom.,Soup is eaten with a spoon.
 scientist,B1,masculine,znanstvenik,X,,X,Znanstvenik radi na novom istraživanju.,The scientist is working on new research.
 know,A1,verb,znati,X,,X,Znam odgovor.,I know the answer.
 yellow,A1,adjective,žut,X,,X,Sunce je žuto.,The sun is yellow.
