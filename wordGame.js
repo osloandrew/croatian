@@ -1094,10 +1094,12 @@ function renderClozeGameUI(
       <div class="game-labels-container">
         <div class="game-label-subgroup">
       <div class="game-gender">${
-        wordObj.gender.startsWith("en") ||
-        wordObj.gender.startsWith("et") ||
-        wordObj.gender.startsWith("ei")
-          ? "N - " + wordObj.gender
+        wordObj.gender.startsWith("masculine")
+          ? "N - Masc"
+          : wordObj.gender.startsWith("feminine")
+          ? "N - Fem"
+          : wordObj.gender.startsWith("neuter")
+          ? "N - Neut"
           : wordObj.gender.startsWith("adjective")
           ? "Adj"
           : wordObj.gender.startsWith("adverb")
