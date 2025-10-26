@@ -40,7 +40,7 @@ const genreIcons = {
   travel: '<i class="fas fa-plane"></i>', // Travel genre icon
 };
 
-const CSV_URL = "norwegianStories.csv";
+const CSV_URL = "croatianStories.csv";
 const STORY_CACHE_KEY = "storyDataEs";
 const STORY_CACHE_TIME_KEY = "storyDataTimestampEs";
 
@@ -62,7 +62,7 @@ async function fetchAndLoadStoryData() {
     }).data;
     storyResults = parsed.map((entry) => ({
       ...entry,
-      titleNorwegian: (entry.titleNorwegian || "").trim(),
+      titleCroatian: (entry.titleCroatian || "").trim(),
     }));
 
     // 3) Optional: store for offline fallback (not used on next run)
@@ -118,7 +118,7 @@ async function displayStoryList(filteredStories = storyResults) {
   clearContainer(); // Clear previous results
 
   // Reset the page title and URL to the main list view
-  document.title = "Stories - Norwegian Dictionary";
+  document.title = "Stories - Croatian Dictionary";
   history.replaceState(
     {},
     "",
@@ -151,16 +151,16 @@ async function displayStoryList(filteredStories = storyResults) {
     const cefrMatch = selectedCEFR
       ? story.CEFR && story.CEFR.trim().toUpperCase() === selectedCEFR
       : true;
-    const hasNorwegian = story.norwegian && story.norwegian.trim() !== "";
+    const hasCroatian = story.croatian && story.croatian.trim() !== "";
     // NEW: title search across ES + EN titles, like JP
     const matchesSearch =
       !searchText ||
-      (story.titleNorwegian &&
-        story.titleNorwegian.toLowerCase().includes(searchText)) ||
+      (story.titleCroatian &&
+        story.titleCroatian.toLowerCase().includes(searchText)) ||
       (story.titleEnglish &&
         story.titleEnglish.toLowerCase().includes(searchText));
 
-    return genreMatch && cefrMatch && hasNorwegian && matchesSearch;
+    return genreMatch && cefrMatch && hasCroatian && matchesSearch;
   });
 
   // Shuffle the filtered stories using Fisher-Yates algorithm
@@ -193,11 +193,11 @@ async function displayStoryList(filteredStories = storyResults) {
 
     const es = document.createElement("div");
     es.classList.add("japanese-title"); // reuse existing class name to avoid CSS churn
-    es.textContent = story.titleNorwegian;
+    es.textContent = story.titleCroatian;
 
     titleContainer.appendChild(es);
 
-    if (story.titleNorwegian !== story.titleEnglish) {
+    if (story.titleCroatian !== story.titleEnglish) {
       const en = document.createElement("div");
       en.classList.add("english-title", "stories-subtitle");
       en.textContent = story.titleEnglish || "";
@@ -224,7 +224,7 @@ async function displayStoryList(filteredStories = storyResults) {
     li.appendChild(detail);
 
     // click → open reader (unchanged behavior)
-    li.addEventListener("click", () => displayStory(story.titleNorwegian));
+    li.addEventListener("click", () => displayStory(story.titleCroatian));
 
     storyList.appendChild(li);
   });
@@ -242,7 +242,7 @@ async function displayStoryList(filteredStories = storyResults) {
   hideSpinner();
 }
 
-async function displayStory(titleNorwegian) {
+async function displayStory(titleCroatian) {
   document.documentElement.classList.add("reading");
   showSpinner(); // Show spinner at the start of story loading
   const searchContainer = document.getElementById("search-container");
@@ -250,17 +250,17 @@ async function displayStory(titleNorwegian) {
     "search-container-inner"
   );
   const selectedStory = storyResults.find(
-    (story) => story.titleNorwegian === titleNorwegian
+    (story) => story.titleCroatian === titleCroatian
   );
 
   if (!selectedStory) {
-    console.error(`No story found with the title: ${titleNorwegian}`);
+    console.error(`No story found with the title: ${titleCroatian}`);
     return;
   }
 
-  document.title = selectedStory.titleNorwegian + " - Norwegian Dictionary";
+  document.title = selectedStory.titleCroatian + " - Croatian Dictionary";
 
-  updateURL(null, "story", null, titleNorwegian); // Update URL with story parameter
+  updateURL(null, "story", null, titleCroatian); // Update URL with story parameter
 
   clearContainer();
 
@@ -439,15 +439,15 @@ async function displayStory(titleNorwegian) {
       contentHTML = audioHTML + contentHTML;
     }
 
-    for (let i = 0; i < norwegianSentences.length; i++) {
-      const norwegianSentence = norwegianSentences[i].trim();
+    for (let i = 0; i < croatianSentences.length; i++) {
+      const croatianSentence = croatianSentences[i].trim();
       const englishSentence = englishSentences[i]
         ? englishSentences[i].trim()
         : "";
 
       contentHTML += `
     <div class="couplet">
-      <div class="japanese-sentence">${norwegianSentence}</div>
+      <div class="japanese-sentence">${croatianSentence}</div>
       <div class="english-sentence">${englishSentence}</div>
     </div>
   `;
@@ -463,9 +463,9 @@ async function displayStory(titleNorwegian) {
       const titleNode = document.createElement("div");
       titleNode.className = "sticky-title-container";
       titleNode.innerHTML = `
-  <h2 class="sticky-title-japanese">${selectedStory.titleNorwegian}</h2>
+  <h2 class="sticky-title-japanese">${selectedStory.titleCroatian}</h2>
   ${
-    selectedStory.titleNorwegian !== selectedStory.titleEnglish
+    selectedStory.titleCroatian !== selectedStory.titleEnglish
       ? `<p class="sticky-title-english">${selectedStory.titleEnglish}</p>`
       : ""
   }
@@ -484,12 +484,12 @@ async function displayStory(titleNorwegian) {
   };
 
   // Process story text into sentences
-  const standardizedNorwegian = selectedStory.norwegian.replace(/[“”«»]/g, '"');
+  const standardizedCroatian = selectedStory.croatian.replace(/[“”«»]/g, '"');
   const standardizedEnglish = selectedStory.english.replace(/[“”«»]/g, '"');
   const sentenceRegex =
     /(?:(["]?.+?(?<!\bMr)(?<!\bMrs)(?<!\bMs)(?<!\bDr)(?<!\bProf)(?<!\bJr)(?<!\bSr)(?<!\bSt)(?<!\bMt)[.!?]["]?)(?=\s|$)|(?:\.\.\."))/g;
-  let norwegianSentences = standardizedNorwegian.match(sentenceRegex) || [
-    standardizedNorwegian,
+  let croatianSentences = standardizedCroatian.match(sentenceRegex) || [
+    standardizedCroatian,
   ];
   let englishSentences = standardizedEnglish.match(sentenceRegex) || [
     standardizedEnglish,
@@ -517,13 +517,13 @@ async function displayStory(titleNorwegian) {
     }, []);
   };
 
-  norwegianSentences = combineSentences(norwegianSentences);
+  croatianSentences = combineSentences(croatianSentences);
   englishSentences = combineSentences(englishSentences, /\basked\b/i);
 
   finalizeContent(false);
 }
 
-// Function to toggle the visibility of English sentences and update Norwegian box styles
+// Function to toggle the visibility of English sentences and update Croatian box styles
 function toggleEnglishSentences() {
   const englishEls = document.querySelectorAll(".english-sentence");
   const englishBtn = document.querySelector(".stories-english-btn");
