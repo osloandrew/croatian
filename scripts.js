@@ -1751,69 +1751,125 @@ function getCefrColor(cefrLevel) {
 }
 
 function generateWordVariationsForSentences(word, pos) {
-  const variations = [word]; // Always include base form
-  const lowerWord = word.toLowerCase();
+  // Purpose: cast a wide net for surface-form matching in Croatian example sentences.
+  // NOTE: This is NOT a full morphological engine—it's a high-coverage heuristic set.
 
-  // crude stem guesses
-  const stem = lowerWord.replace(/ti$/, ""); // verbs
-  const adjStem = lowerWord.replace(/(i|a|o|e)$/, ""); // adjectives
-  const nounStem = lowerWord.replace(/(a|o|e|i)$/, "");
+  const v = new Set([word]); // always include lemma/base as given
+  const w = String(word || "").toLowerCase();
+
+  // crude stems (heuristic)
+  const verbStem = w.replace(/ti$/, ""); // učiti -> uči-
+  const adjStem = w.replace(/(i|a|o|e)$/, ""); // mali -> mal-
+  const nounStem = w.replace(/(a|o|e|i)$/, ""); // selo -> sel-
 
   if (pos === "noun") {
-    // masculine/feminine/neuter endings
-    variations.push(
-      nounStem + "a",
-      nounStem + "e",
-      nounStem + "i",
-      nounStem + "u",
-      nounStem + "om",
-      nounStem + "em",
-      nounStem + "ama",
-      nounStem + "ima",
-      nounStem + "ovi",
-      nounStem + "evima"
-    );
-  } else if (pos === "verb") {
-    // infinitive already included
-    variations.push(
-      stem + "m", // 1sg present
-      stem + "š", // 2sg present
-      stem, // 3sg present often bare
-      stem + "mo", // 1pl
-      stem + "te", // 2pl
-      stem + "ju", // 3pl
-      stem + "e", // alt 3pl
-      stem + "o", // past masc
-      stem + "la", // past fem
-      stem + "li", // past pl
-      stem + "j", // imperative sg
-      stem + "jte" // imperative pl
-    );
-    // add future (periphrastic)
-    variations.push(
-      word + " ću",
-      word + " ćeš",
-      word + " će",
-      word + " ćemo",
-      word + " ćete",
-      word + " će"
-    );
+    // Frequent noun endings across genders (sg/pl, common cases).
+    // This is purposely redundant across genders to maximize recall.
+    [
+      "a", // gen sg (žena → žene; selo → sela (also nom/acc pl neuter))
+      "e", // nom/acc pl fem; voc sg masc; acc sg fem
+      "i", // dat sg fem; nom pl masc
+      "u", // loc sg; acc sg masc/neut (many)
+      "o", // nom sg neuter (selo)
+      "om", // instr sg masc/neut
+      "em", // dat/loc sg masc (soft stems)
+      "ama", // dat/loc/instr pl fem
+      "ima", // dat/loc/instr pl masc/neut
+      "ovi", // nom pl masc (grad → gradovi)
+      "evima", // dat/loc/instr pl masc alt pattern
+      "ovima", // dat/loc/instr pl masc alt (gradovima)
+      "ih", // gen pl (many paradigms)
+    ].forEach((end) => v.add(nounStem + end));
   } else if (pos === "adjective") {
-    variations.push(
-      adjStem + "i",
-      adjStem + "a",
-      adjStem + "e",
-      adjStem + "og",
-      adjStem + "oj",
-      adjStem + "ome",
-      adjStem + "ima"
+    // Core agreement + oblique + degrees.
+    // Key fix: include neuter sg "-o" (e.g., selo je malo).
+    [
+      "i", // masc pl (dobri)
+      "a", // fem sg (dobra)
+      "e", // fem pl (dobre)
+      "o", // neut sg (dobro)  ← critical fix for "malo"
+      "og", // gen/acc (anim) masc sg (dobrog)
+      "ega", // alt gen/acc masc sg (dobroga)
+      "om", // dat/loc masc/neut sg (dobrom)
+      "oj", // dat/loc fem sg (dobroj)
+      "im", // dat/loc/inst pl (dobrim)  ← adjectives take -im (not -ima)
+      "ih", // gen pl (dobrih)
+    ].forEach((end) => v.add(adjStem + end));
+
+    // Comparative patterns (cover common alternations)
+    v.add(adjStem + "ji");
+    v.add(adjStem + "iji");
+    v.add(adjStem + "ši"); // e.g., lak → lakši (irregular class)
+
+    // Superlative = "naj-" + comparative
+    v.add("naj" + adjStem + "ji");
+    v.add("naj" + adjStem + "iji");
+    v.add("naj" + adjStem + "ši");
+  } else if (pos === "verb") {
+    // PRESENT: cover all three theme-vowel classes (-a-, -e-, -i-)
+    // 1sg
+    v.add(verbStem + "m"); // generic (if theme vowel already present)
+    v.add(verbStem + "am"); // radim/radam (cover -a- class)
+    v.add(verbStem + "em"); // pišem (-e- class)
+    v.add(verbStem + "im"); // učim (-i- class)
+    // 2sg
+    v.add(verbStem + "š");
+    v.add(verbStem + "aš");
+    v.add(verbStem + "eš");
+    v.add(verbStem + "iš");
+    // 3sg
+    v.add(verbStem); // some lemmatizers yield bare stem—keep it
+    v.add(verbStem + "a");
+    v.add(verbStem + "e");
+    v.add(verbStem + "i");
+    // 1pl
+    v.add(verbStem + "mo");
+    v.add(verbStem + "amo");
+    v.add(verbStem + "emo");
+    v.add(verbStem + "imo");
+    // 2pl
+    v.add(verbStem + "te");
+    v.add(verbStem + "ate");
+    v.add(verbStem + "ete");
+    v.add(verbStem + "ite");
+    // 3pl
+    v.add(verbStem + "u");
+    v.add(verbStem + "ju");
+    v.add(verbStem + "e");
+    v.add(verbStem + "aju");
+
+    // PAST (L-participle) — cover gender/number
+    v.add(verbStem + "o"); // masc sg (radio/jeo pattern varies by lemma, but -o helps matching)
+    v.add(verbStem + "la"); // fem sg
+    v.add(verbStem + "lo"); // neut sg
+    v.add(verbStem + "li"); // masc/mixed pl
+    v.add(verbStem + "le"); // fem pl
+    v.add(verbStem + "la"); // neut pl
+
+    // IMPERATIVE (common shapes)
+    v.add(verbStem + "j"); // dođi-type often surfaces as -j after palatalization
+    v.add(verbStem + "jte"); // pl
+    v.add(verbStem + "i"); // piši / uči
+    v.add(verbStem + "imo"); // pišimo
+    v.add(verbStem + "ite"); // pišite
+    v.add(verbStem + "aj"); // -ati class: radi → radi / (radi!) ~ rad(i)/rad(i)!; many -aj imperatives surface
+    v.add(verbStem + "ajte"); // -ajte
+
+    // FUTURE I (periphrastic) — keep separated with space
+    ["ću", "ćeš", "će", "ćemo", "ćete", "će"].forEach((aux) =>
+      v.add(w + " " + aux)
+    );
+
+    // CONDITIONAL (bih/bi/bismo/biste/bi)
+    ["bih", "bi", "bismo", "biste", "bi"].forEach((aux) =>
+      v.add(w + " " + aux)
     );
   } else {
-    // fallback: just return base
-    variations.push(word);
+    // other POS: just return base
+    v.add(word);
   }
 
-  return [...new Set(variations)]; // remove duplicates
+  return Array.from(v);
 }
 
 function renderSentenceMatchesFromCorpus(rows, query) {
