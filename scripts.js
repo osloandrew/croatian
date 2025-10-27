@@ -1762,6 +1762,29 @@ function generateWordVariationsForSentences(word, pos) {
   const adjStem = w.replace(/(i|a|o|e)$/, ""); // mali -> mal-
   const nounStem = w.replace(/(a|o|e|i)$/, ""); // selo -> sel-
 
+  if (pos === "expression" && w.endsWith(" se")) {
+    const bareVerb = w.replace(/\s+se$/, ""); // strip off ' se'
+    const baseForms = generateWordVariationsForSentences(bareVerb, "verb");
+
+    baseForms.forEach((form) => {
+      v.add(form + " se"); // post-verbal se
+      v.add("se " + form); // pre-verbal se
+    });
+
+    // add periphrastic futures/conditionals too
+    ["ću", "ćeš", "će", "ćemo", "ćete", "će"].forEach((aux) => {
+      v.add(bareVerb + " " + aux + " se");
+      v.add("se " + bareVerb + " " + aux);
+    });
+    ["bih", "bi", "bismo", "biste", "bi"].forEach((aux) => {
+      v.add(bareVerb + "o " + aux + " se");
+      v.add("se " + bareVerb + "o " + aux);
+    });
+
+    v.add(w); // keep the lemma as-is
+    return Array.from(v);
+  }
+
   if (pos === "noun") {
     // Frequent noun endings across genders (sg/pl, common cases).
     // This is purposely redundant across genders to maximize recall.
