@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate a sitemap.xml for the Norwegian learning app.
+Generate a sitemap.xml for the Croatian learning app.
 
 - Reads norwegianWords.csv and norwegianStories.csv
 - Builds URLs for words and stories
@@ -29,7 +29,7 @@ def build_word_urls(csv_path: Path) -> list[str]:
     with csv_path.open(newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            word = (row.get("ord") or "").split(",")[0].strip()
+            word = (row.get("word") or "").split(",")[0].strip()
             pos = (row.get("gender") or "").strip()  # 'verb', 'en', 'expression', etc.
 
             if not word:
@@ -58,7 +58,7 @@ def build_story_urls(csv_path: Path) -> list[str]:
     with csv_path.open(newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            title = (row.get("titleNorwegian") or "").strip()
+            title = (row.get("titleCroatian") or "").strip()
             if not title:
                 continue
 
