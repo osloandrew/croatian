@@ -13,9 +13,9 @@ import html
 from pathlib import Path
 
 # --- CONFIGURATION ---
-SITE = "https://osloandrew.github.io/norwegian"
-WORDS_CSV = Path("thaiWords.csv")
-STORIES_CSV = Path("thaiStories.csv")
+SITE = "https://osloandrew.github.io/croatian"
+WORDS_CSV = Path("croatianWords.csv")
+STORIES_CSV = Path("croatianStories.csv")
 OUTPUT_FILE = Path("sitemap.xml")
 
 
