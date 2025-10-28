@@ -380,7 +380,7 @@ async function startWordGame() {
         let allWords = shuffleArray([formattedClozed, ...distractors]);
         let uniqueWords = ensureUniqueDisplayedValues(allWords);
 
-        if (/^[A-ZÆØÅ]/.test(clozedForm)) {
+        if (/^\p{Lu}/u.test(clozedForm)) {
           uniqueWords = uniqueWords.map(
             (word) => word.charAt(0).toUpperCase() + word.slice(1)
           );
@@ -582,7 +582,7 @@ async function startWordGame() {
 
     let formattedClozed = formatCase(clozedForm);
     const wasCapitalizedFromLowercase =
-      !/^[A-ZÆØÅ]/.test(baseWord) && /^[A-ZÆØÅ]/.test(clozedForm);
+      !/^\p{Lu}/u.test(baseWord) && /^\p{Lu}/u.test(clozedForm);
     const distractors = generateClozeDistractors(
       baseWord,
       formattedClozed,
@@ -1472,9 +1472,10 @@ async function fetchRandomWord() {
       // Handle nouns: Include "en", "et", "ei" but exclude "pronoun"
       if (selectedPOS === "noun") {
         return (
-          (gender.startsWith("en") ||
-            gender.startsWith("et") ||
-            gender.startsWith("ei")) &&
+          (gender.startsWith("noun") ||
+            gender.startsWith("masculine") ||
+            gender.startsWith("feminine") ||
+            gender.startsWith("neuter")) &&
           gender !== "pronoun"
         );
       }
@@ -1615,19 +1616,6 @@ function getEndingPattern(form) {
   if (form.match(/t$/)) return /t$/i;
   if (form.match(/r$/)) return /r$/i; // ⬅️ New line you add
   return new RegExp(form.slice(-1) + "$", "i"); // fallback
-}
-
-function isDefiniteNounForm(word, gender) {
-  const lower = word.toLowerCase();
-  if (gender.startsWith("en") || gender.startsWith("ei")) {
-    return lower.endsWith("en") || lower.endsWith("a");
-    // ❗ REMOVE lower.endsWith("n")
-  }
-  if (gender.startsWith("et")) {
-    return lower.endsWith("et");
-    // ❗ REMOVE lower.endsWith("t")
-  }
-  return false;
 }
 
 function matchesInflectedForm(base, token, gender) {
