@@ -135,12 +135,13 @@ function filterResultsByPOS(results, selectedPOS) {
 
 // Helper function to format 'gender' (grammatical gender) based on its value
 function formatGender(gender) {
-  return gender &&
-    ["masculine", "feminine", "neuter"].includes(
-      gender.substring(0, 2).toLowerCase()
-    )
-    ? "noun - " + gender
-    : gender;
+  if (!gender) return "";
+  const g = gender.toLowerCase().trim();
+  // If it starts with a Croatian gender, mark as noun
+  if (["masculine", "feminine", "neuter"].some((x) => g.startsWith(x))) {
+    return "noun - " + gender;
+  }
+  return gender;
 }
 
 // Clear the search input field
@@ -1492,11 +1493,14 @@ function displaySearchResults(results, query = "") {
   results.slice(0, 10).forEach((result) => {
     result.gender = formatGender(result.gender);
     // Directly handle the POS based on the gender field
-    result.pos = ["en", "et", "ei", "en-et", "en-ei-et"].some((gender) =>
-      result.gender.toLowerCase().includes(gender)
-    )
-      ? "noun"
-      : result.gender.toLowerCase();
+    {
+      const g = (result.gender || "").toLowerCase();
+      result.pos = ["masculine", "feminine", "neuter"].some((x) =>
+        g.includes(x)
+      )
+        ? "noun"
+        : g;
+    }
 
     // Convert the word to lowercase and trim spaces when generating the ID
     const normalizedWord = result.ord.toLowerCase().trim();
