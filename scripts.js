@@ -271,7 +271,7 @@ function buildSentenceCorpus() {
 }
 
 function tokenize(text) {
-  // Unicode letters (incl. å, æ, ø). Grabs words like "være", "språk".
+  // Unicode letters.
   const m = text.match(/\p{L}+/gu);
   return m ? m.map((w) => w.toLowerCase()) : [];
 }
@@ -1989,7 +1989,7 @@ function highlightQuery(sentence, query) {
   );
 
   // Define a regex pattern that includes Croatian characters and dynamically inserts the query
-  const croatianLetters = "[\\wåæøÅÆØ]"; // Include Croatian letters in the pattern
+  const croatianLetters = "[\\wčćđšžČĆĐŠŽ]"; // Include Croatian letters in the pattern
   const regex = new RegExp(
     `(${croatianLetters}*${query}${croatianLetters}*)`,
     "gi"
@@ -2007,7 +2007,7 @@ function highlightQuery(sentence, query) {
   // Highlight each query variation in the sentence
   queries.forEach((q) => {
     // Define a regex pattern that includes Croatian characters and dynamically inserts the query
-    const regex = new RegExp(`(\\b${q}\\b|\\b${q}(?![\\wåæøÅÆØ]))`, "gi");
+    const regex = new RegExp(`(\\b${q}\\b|\\b${q}(?![\\wčćđšžČĆĐŠŽ]))`, "gi");
 
     // Highlight all occurrences of the query variation in the sentence
     cleanSentence = cleanSentence.replace(
@@ -2021,7 +2021,7 @@ function highlightQuery(sentence, query) {
     result.ord.toLowerCase().includes(query)
   );
   const pos = matchingWordEntry
-    ? ["en", "et", "ei", "en-et", "en-ei-et"].some((gender) =>
+    ? ["masculine", "feminine", "neuter"].some((gender) =>
         matchingWordEntry.gender.toLowerCase().includes(gender)
       )
       ? "noun"
@@ -2070,7 +2070,7 @@ function renderSentencesHTML(sentenceResults, wordVariations) {
 
         if (matchedVariation) {
           // Use a regular expression to match the full word containing any of the variations
-          const croatianPattern = "[\\wåæøÅÆØ]"; // Pattern including Croatian letters
+          const croatianPattern = "[\\wčćđšžČĆĐŠŽ]"; // Pattern including Croatian letters
           const regex = new RegExp(
             `(${croatianPattern}*${matchedVariation}${croatianPattern}*)`,
             "gi"
@@ -2249,7 +2249,7 @@ function fetchAndRenderSentences(word, pos, showEnglish = true) {
       } else {
         // For other parts of speech, ensure the word starts a word
         const regexStartOfWord = new RegExp(
-          `(^|[^\\wåæøÅÆØ])${variation}`,
+          `(^|[^\\wčćđšžČĆĐŠŽ])${variation}`,
           "i"
         );
         return regexStartOfWord.test(r.eksempel);
@@ -2280,7 +2280,7 @@ function fetchAndRenderSentences(word, pos, showEnglish = true) {
           pos === "interjection" ||
           pos === "numeral"
             ? new RegExp(`(^|\\s)${variation}($|[\\s.,!?;])`, "gi")
-            : new RegExp(`(^|[^\\wåæøÅÆØ])${variation}`, "i");
+            : new RegExp(`(^|[^\\wčćđšžČĆĐŠŽ])${variation}`, "i");
         return regex.test(sentence);
       });
 
