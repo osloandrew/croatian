@@ -141,6 +141,7 @@ const noRandom = [
   "pederski",
   "pedofil",
   "pedofilija",
+  "penis",
   "pička",
   "pičkica",
   "pičkasto",
