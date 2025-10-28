@@ -514,25 +514,31 @@ function generateInexactMatches(query) {
 
   // Handle common suffixes like 'ing', 'ed', etc.
   const suffixes = [
-    "a",
-    "e",
-    "ed",
-    "en",
-    "ende",
-    "ene",
-    "er",
-    "es",
-    "et",
-    "i",
-    "ing",
-    "ly",
-    "men",
-    "n",
-    "ne",
-    "r",
-    "s",
-    "t",
-    "te",
+    "a", // nom sg fem, gen sg neuter, etc.
+    "e", // gen sg fem, nom/acc pl fem
+    "i", // dat sg fem, nom pl masc
+    "u", // acc sg masc/neut, loc sg
+    "o", // nom sg neuter
+    "om", // dat/loc/inst sg masc/neut
+    "em", // dat/loc sg masc soft stem
+    "ama", // dat/loc/inst pl fem
+    "ima", // dat/loc/inst pl masc/neut
+    "ovi", // nom pl masc
+    "eve", // alt masc pl
+    "ovima", // dat/loc/inst pl masc
+    "ih", // gen pl
+    "ju", // 3pl pres, acc sg fem
+    "ao",
+    "eo",
+    "io", // past masc sg common verb stems
+    "la",
+    "lo",
+    "li",
+    "le", // past fem/neut/pl
+    "š",
+    "m", // 1sg/2sg present
+    "mo",
+    "te", // 1pl/2pl present
   ]; // Alphabetized
   suffixes.forEach((suffix) => {
     if (query.endsWith(suffix)) {
