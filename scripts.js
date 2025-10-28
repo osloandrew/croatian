@@ -1767,10 +1767,166 @@ function generateWordVariationsForSentences(word, pos) {
   const v = new Set([word]); // always include lemma/base as given
   const w = String(word || "").toLowerCase();
 
-  // crude stems (heuristic)
-  const verbStem = w.replace(/ti$/, ""); // učiti -> uči-
-  const adjStem = w.replace(/(i|a|o|e)$/, ""); // mali -> mal-
-  const nounStem = w.replace(/(a|o|e|i)$/, ""); // selo -> sel-
+  // --- IRREGULAR EXCEPTIONS ---
+  // Hard-coded lists for the most common irregulars
+  const irregulars = {
+    biti: [
+      "sam",
+      "si",
+      "je",
+      "smo",
+      "ste",
+      "su",
+      "bio",
+      "bila",
+      "bilo",
+      "bili",
+      "bile",
+    ],
+    htjeti: [
+      "ću",
+      "ćeš",
+      "će",
+      "ćemo",
+      "ćete",
+      "će",
+      "htio",
+      "htjela",
+      "htjeli",
+    ],
+    moći: [
+      "mogu",
+      "možeš",
+      "može",
+      "možemo",
+      "možete",
+      "mogu",
+      "mogao",
+      "mogla",
+      "mogli",
+    ],
+    ići: [
+      "idem",
+      "ideš",
+      "ide",
+      "idemo",
+      "idete",
+      "idu",
+      "išao",
+      "išla",
+      "išli",
+    ],
+    doći: [
+      "dođem",
+      "dođeš",
+      "dođe",
+      "dođemo",
+      "dođete",
+      "dođu",
+      "došao",
+      "došla",
+      "došli",
+    ],
+    dati: ["dam", "daš", "da", "damo", "date", "daju", "dao", "dala", "dali"],
+    jesti: [
+      "jedem",
+      "jedeš",
+      "jede",
+      "jedemo",
+      "jedete",
+      "jedu",
+      "jeo",
+      "jela",
+      "jeli",
+    ],
+    vidjeti: [
+      "vidim",
+      "vidiš",
+      "vidi",
+      "vidimo",
+      "vidite",
+      "vide",
+      "vidio",
+      "vidjela",
+      "vidjeli",
+    ],
+    teći: [
+      "tečem",
+      "tečeš",
+      "teče",
+      "tečemo",
+      "tečete",
+      "teku",
+      "tekao",
+      "tekla",
+      "tekli",
+    ],
+    čovjek: ["ljudi"], // irregular plural
+    dijete: ["djeca", "djeteta", "djeci", "djecu"],
+    otac: ["očevi", "oca", "ocu", "ocem"],
+    majka: ["majke", "majci", "majkom"],
+  };
+
+  if (irregulars[w]) {
+    irregulars[w].forEach((f) => v.add(f));
+  }
+
+  // --- crude stems for Croatian (heuristic, not full morphology) ---
+  let verbStem = w;
+  let adjStem = w;
+  let nounStem = w;
+
+  // --- VERBS ---
+  // infinitive -ti → bare stem
+  if (verbStem.endsWith("ti")) {
+    verbStem = verbStem.replace(/ti$/, ""); // učiti → uči-
+  }
+  // catch a few irregular infinitives (just broaden recall, not perfect)
+  if (/ći$/.test(w)) {
+    // ići, doći, moći → strip -ći
+    verbStem = w.replace(/ći$/, "");
+  }
+  if (/jeti$/.test(w)) {
+    // htjeti → htje- (approximate)
+    verbStem = w.replace(/jeti$/, "je");
+  }
+
+  // --- ADJECTIVES ---
+  if (/(an|en|in)$/.test(adjStem)) {
+    // važan → važn, sretan → sretn, jedinstven → jedinstven
+    adjStem = adjStem.replace(/(an|en|in)$/, "n");
+  } else if (/(ak|ek|ik)$/.test(adjStem)) {
+    // težak → tešk-, lagan → lagan/lag-, velik → velik/velik-
+    adjStem = adjStem.replace(/(ak|ek|ik)$/, "k");
+  } else if (/d$/.test(adjStem)) {
+    // mlad → mlad- (don’t strip vowel)
+    adjStem = adjStem;
+  } else {
+    // regular endings: mali/mala/malo, dobar/dobra/dobro
+    adjStem = adjStem.replace(/(i|a|o|e)$/, "");
+  }
+
+  // --- NOUNS ---
+  // default: strip final vowel (žena → žen-, selo → sel-)
+  nounStem = w.replace(/(a|o|e|i)$/, "");
+
+  // special noun patterns
+  if (/ac$/.test(w)) {
+    // otac → očev-, mladić/vojnik handled elsewhere
+    nounStem = w.replace(/ac$/, "c");
+  }
+  if (/ik$/.test(w)) {
+    // vojnik → vojnici
+    nounStem = w.replace(/ik$/, "k");
+  }
+  if (/ost$/.test(w)) {
+    // mladost → mladost(i)
+    nounStem = w; // leave whole, since stem doesn’t shorten
+  }
+  if (/et$/.test(w)) {
+    // dijete → djece (irregular, approximate only)
+    nounStem = w.replace(/et$/, "ec");
+  }
 
   if (pos === "expression" && w.endsWith(" se")) {
     const bareVerb = w.replace(/\s+se$/, ""); // strip off ' se'
@@ -1828,6 +1984,16 @@ function generateWordVariationsForSentences(word, pos) {
       "im", // dat/loc/inst pl (dobrim)  ← adjectives take -im (not -ima)
       "ih", // gen pl (dobrih)
     ].forEach((end) => v.add(adjStem + end));
+
+    // Special case: adjectives ending in -an / -en / -in
+    // These often keep the whole "an/en/in" before endings.
+    if (/(an|en|in)$/.test(w)) {
+      ["a", "o", "i", "e", "og", "ega", "om", "oj", "im", "ih"].forEach(
+        (end) => {
+          v.add(w.replace(/(an|en|in)$/, "$1") + end);
+        }
+      );
+    }
 
     // Comparative patterns (cover common alternations)
     v.add(adjStem + "ji");
@@ -2249,7 +2415,7 @@ function fetchAndRenderSentences(word, pos, showEnglish = true) {
       } else {
         // For other parts of speech, ensure the word starts a word
         const regexStartOfWord = new RegExp(
-          `(^|[^\\wčćđšžČĆĐŠŽ])${variation}`,
+          `(^|[^\\wčćđšžČĆĐŠŽ])${variation}($|[^\\wčćđšžČĆĐŠŽ])`,
           "i"
         );
         return regexStartOfWord.test(r.eksempel);
