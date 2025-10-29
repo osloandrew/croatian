@@ -59,7 +59,7 @@ patient,B1,masculine,bolesnik,X,,X,Bolesnik čeka pregled u bolnici već sat vre
 "sick, ill",A1,adjective,bolestan,X,,X,On je bolestan danas.,He is sick today.
 better,A2,adverb,bolje,X,,X,Osjećam se bolje nego jučer.,I feel better than yesterday.
 better,A1,adjective,bolji,X,,X,Ovaj bicikl je bolji od mog starog bicikla.,This bicycle is better than my old bicycle.
-hospital,A1,feminine,bolnica,X,,X,Bolnica je velika.,The hospital is big.
+hospital,A1,feminine,bolnica,X,,X,Bolnica prima nove pacijente svaki dan.,The hospital admits new patients every day.
 Christmas,A2,masculine,Božić,X,,X,Božić je obiteljski blagdan.,Christmas is a family holiday.
 marriage,B1,masculine,brak,X,,X,Brak zahtijeva povjerenje i razumijevanje.,Marriage requires trust and understanding.
 defend,B1,verb,braniti,X,,X,Vojnici moraju braniti granicu zemlje.,Soldiers must defend the country’s border.
@@ -86,7 +86,7 @@ often,A1,adverb,često,X,,X,On često gleda televiziju navečer.,He often watche
 four,A1,numeral,četiri,X,,X,Imam četiri knjige.,I have four books.
 forty,A1,numeral,četrdeset,X,,X,U razredu je četrdeset učenika.,There are forty students in the classroom.
 fourteen,A1,numeral,četrnaest,X,,X,Imam četrnaest knjiga u torbi.,I have fourteen books in my bag.
-Thursday,A1,masculine,četvrtak,X,,X,Četvrtak je moj omiljeni dan.,Thursday is my favorite day.
+Thursday,A1,masculine,četvrtak,X,,X,Četvrtak je četvrti dan u tjednu.,Thursday is the fourth day of the week.
 "whole, entire",A2,adjective,cijel,X,,X,Pročitao sam cijelu knjigu.,I read the whole book.
 price,A2,feminine,cijena,X,,X,Cijena hotela je previsoka.,The price of the hotel is too high.
 whose,A2,adjective,čiji,X,,X,Čiji je ovo kaput na stolici?,Whose coat is this on the chair?
@@ -513,7 +513,7 @@ muscular,B2,adjective,mišićni,X,,X,Ovo je mišićni poremećaj koji zahtijeva 
 think,A2,verb,misliti,X,,X,Mislim da je ovaj film jako dobar.,I think this movie is very good.
 opinion,B1,neuter,mišljenje,X,,X,Moje mišljenje je da je film bio predobar.,My opinion is that the movie was excellent.
 wash,B2,verb,miti,X,,X,Radnici su morali mititi staru fasadu prije bojenja.,The workers had to wash the old facade before painting.
-"month, moon",A1,masculine,mjesec,X,,X,Mjesec je na nebu.,The moon is in the sky.
+"month, moon",A1,masculine,mjesec,X,,X,Svibanj je mjesec kada cvijeće brzo raste.,May is the month when flowers grow quickly.
 monthly,B1,adjective,mjesečni,X,,X,Imam mjesečni trošak za stanarinu i režije.,I have a monthly expense for rent and utilities.
 young,A1,adjective,mlad,X,,X,On je mlad učitelj.,He is a young teacher.
 "young man, lad, boyfriend",A2,masculine,mladić,X,,X,Mladić sjedi u kafiću i čita knjigu.,A young man is sitting in a café and reading a book.
@@ -674,7 +674,7 @@ depart,B1,verb,otputovati,X,,X,Planiramo otputovati u Grčku sljedećeg ljeta.,W
 open,A2,adjective,otvoren,X,,X,Muzej je otvoren do pet sati.,The museum is open until five o’clock.
 openness,B2,feminine,otvorenost,X,,X,Otvorenost prema novim idejama često vodi do osobnog i profesionalnog rasta.,Openness to new ideas often leads to personal and professional growth.
 open,A2,verb,otvoriti,X,,X,"Možeš li otvoriti prozor, vruće je?","Can you open the window, it’s hot?"
-this,A1,adjective,ovaj,X,,X,Ovaj stol je velik.,This table is big.
+this,A1,adjective,ovaj,X,,X,Ovaj film gledamo večeras u kinu.,We are watching this movie tonight at the cinema.
 sheep,A1,feminine,ovca,X,,X,Ovca je na polju.,The sheep is in the field.
 here,A1,adverb,ovdje,X,,X,Torba je ovdje na podu.,The bag is here on the floor.
 this,A1,pronoun,ovo,X,,X,Ovo je moja nova torba.,This is my new bag.
@@ -769,7 +769,7 @@ after,A2,preposition,poslije,X,,X,Idemo kući poslije škole.,We are going home 
 afterwards,A2,adverb,poslije,X,,X,Poslije ćemo piti kavu.,Afterwards we will drink coffee.
 afternoon,A2,neuter,poslijepodne,X,,X,Poslijepodne idem u šetnju s prijateljima.,In the afternoon I’m going for a walk with friends.
 "last, final",B1,adjective,posljednji,X,,X,Pročitao sam posljednji članak u novinama.,I read the last article in the newspaper.
-"mail, post, post office",A1,feminine,pošta,X,,X,Pošta prodaje marke i razglednice.,The post office sells stamps and postcards.
+"mail, post, post office",A1,feminine,pošta,X,,X,Pošta je stigla jutros u moj sandučić.,The mail arrived this morning in my mailbox.
 "mailman, postman",A2,masculine,poštar,X,,X,Poštar donosi pisma.,The postman delivers letters.
 exist,B1,verb,postojati,X,,X,Ne mogu vjerovati da još uvijek postojati takvi običaji.,I can’t believe such customs still exist.
 stream,B1,masculine,potok,X,,X,Kroz selo prolazi mali potok.,A small stream passes through the village.
@@ -1106,7 +1106,7 @@ third,A1,adjective,treći,X,,X,To je moj treći sat danas.,This is my third clas
 moment,A2,masculine,trenutak,X,,X,U tom trenutku zazvonio je telefon.,At that moment the phone rang.
 "square, marketplace",A1,masculine,trg,X,,X,Trg je pun ljudi.,The square is full of people.
 "shopkeeper, dealer",A2,masculine,trgovac,X,,X,Trgovac prodaje voće na tržnici.,The shopkeeper sells fruit at the market.
-"store, shop",A1,feminine,trgovina,X,,X,Trgovina je blizu.,The store is close.
+"store, shop",A1,feminine,trgovina,X,,X,Trgovina prodaje svježe voće i povrće.,The store sells fresh fruit and vegetables.
 three,A1,numeral,tri,X,,X,Tri stola su u sobi.,There are three tables in the room.
 thirty,A1,numeral,trideset,X,,X,U učionici sjedi trideset učenika.,Thirty students sit in the classroom.
 thirteen,A1,numeral,trinaest,X,,X,U razredu je trinaest stolica.,There are thirteen chairs in the classroom.
@@ -1193,7 +1193,7 @@ evening,A1,feminine,večer,X,,X,Večer provodim s obitelji.,I spend the evening 
 "tonight, this evening",A2,adverb,večeras,X,,X,Večeras idemo u kino.,Tonight we are going to the movie theater.
 evening,B2,adjective,večernji,X,,X,Na svečanosti je održan večernji koncert klasične glazbe.,At the ceremony an evening concert of classical music was held.
 bigger,A1,adjective,veći,X,,X,Naša kuća je veća od njihove kuće.,Our house is bigger than their house.
-"big, large",A1,adjective,velik,X,,X,To je velik grad.,That is a big city.
+"big, large",A1,adjective,velik,X,,X,Velik park u gradu ima igralište za djecu.,A big park in the city has a playground for children.
 February,A1,feminine,veljača,X,,X,Veljača je kratak mjesec.,February is a short month.
 rejoice,A2,expression,veseliti se,X,,X,Veselim se susretu s prijateljima.,I look forward to meeting my friends.
 relationship,B1,feminine,veza,X,,X,Njihova veza traje već pet godina.,Their relationship has lasted for five years.
