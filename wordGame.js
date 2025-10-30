@@ -386,6 +386,23 @@ async function startWordGame() {
           );
         }
 
+        // ✅ Guarantee 4 options in REINTRODUCED CLOZE mode
+        if (uniqueWords.length < 4) {
+          const fallbackPool = results
+            .map((r) => r.ord.split(",")[0].trim().toLowerCase())
+            .filter(
+              (w) => w && w !== formattedClozed && !uniqueWords.includes(w)
+            );
+
+          while (uniqueWords.length < 4 && fallbackPool.length > 0) {
+            const candidate =
+              fallbackPool[Math.floor(Math.random() * fallbackPool.length)];
+            if (!uniqueWords.includes(candidate)) {
+              uniqueWords.push(candidate);
+            }
+          }
+        }
+
         renderClozeGameUI(randomWordObj, uniqueWords, clozedForm, true);
       } else {
         // Rebuild incorrect translations for non-cloze word
@@ -599,6 +616,21 @@ async function startWordGame() {
       );
       formattedClozed =
         formattedClozed.charAt(0).toUpperCase() + formattedClozed.slice(1);
+    }
+
+    // ✅ Guarantee 4 options in CLOZE mode
+    if (uniqueWords.length < 4) {
+      const fallbackPool = results
+        .map((r) => r.ord.split(",")[0].trim().toLowerCase())
+        .filter((w) => w && w !== formattedClozed && !uniqueWords.includes(w));
+
+      while (uniqueWords.length < 4 && fallbackPool.length > 0) {
+        const candidate =
+          fallbackPool[Math.floor(Math.random() * fallbackPool.length)];
+        if (!uniqueWords.includes(candidate)) {
+          uniqueWords.push(candidate);
+        }
+      }
     }
 
     renderClozeGameUI(randomWordObj, uniqueWords, formattedClozed, false);
@@ -964,51 +996,34 @@ function renderClozeGameUI(
   const lowerSentence = firstNorwegian.toLowerCase();
   const lowerBaseWord = baseWord.toLowerCase();
 
-  if (wordObj.gender === "expression" || wordObj.gender === "interjection") {
-    const normalizedBase = baseWord.normalize("NFC").toLowerCase();
-    const normalizedSentence = firstNorwegian.normalize("NFC");
+  if (wordObj.gender === "expression") {
+    if (baseWord.endsWith(" se")) {
+      const verbBase = baseWord.replace(/\s+se$/, "");
+      const tokens = firstNorwegian.match(/[\p{L}-]+/gu) || [];
 
-    console.log("🔍 Attempting cloze match for expression:");
-    console.log("  Base word (normalized):", normalizedBase);
-    console.log("  Sentence (normalized):", normalizedSentence);
+      for (let i = 0; i < tokens.length; i++) {
+        const token = tokens[i].toLowerCase();
+        const next = tokens[i + 1]?.toLowerCase();
+        const prev = tokens[i - 1]?.toLowerCase();
 
-    try {
-      const escapedBase = normalizedBase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const regex = new RegExp(escapedBase, "i");
-      const match = normalizedSentence.match(regex);
-
-      console.log("  Using regex:", regex);
-
-      if (match) {
-        clozeTarget = match[0];
-        console.log("✅ Match found:", clozeTarget);
-      } else {
-        // NEW fallback logic for inflected multi-word expressions
-        const parts = baseWord.split(/\s+/); // e.g., ['bli', 'borte']
-        const tokens = firstNorwegian.match(/[\p{L}-]+/gu) || [];
-
-        for (let i = 0; i < tokens.length - (parts.length - 1); i++) {
-          const slice = tokens.slice(i, i + parts.length);
-          const [first, ...rest] = slice;
-
-          if (
-            matchesInflectedForm(parts[0], first, "verb") &&
-            rest.map((t) => t.toLowerCase()).join(" ") ===
-              parts.slice(1).join(" ")
-          ) {
-            clozeTarget = slice.join(" ");
-            console.log("✅ Fallback match found:", clozeTarget);
-            break;
-          }
+        // verb + se
+        if (matchesInflectedForm(verbBase, token, "verb") && next === "se") {
+          clozeTarget = tokens[i] + " " + tokens[i + 1];
+          break;
         }
-
-        if (!clozeTarget) {
-          console.warn("❌ No match found using regex:", regex);
+        // se + verb
+        if (token === "se" && matchesInflectedForm(verbBase, next, "verb")) {
+          clozeTarget = tokens[i] + " " + tokens[i + 1];
+          break;
         }
       }
-    } catch (err) {
-      console.error("🚨 Regex construction failed:", err.message);
-      console.error("  Problematic base word was:", normalizedBase);
+    } else {
+      // fallback: simple substring match for non-"se" expressions
+      const normalizedBase = baseWord.normalize("NFC").toLowerCase();
+      const normalizedSentence = firstNorwegian.normalize("NFC").toLowerCase();
+      if (normalizedSentence.includes(normalizedBase)) {
+        clozeTarget = baseWord;
+      }
     }
   } else {
     const tokens = firstNorwegian.match(/[\p{L}-]+/gu) || [];
@@ -1018,7 +1033,7 @@ function renderClozeGameUI(
 
     for (const token of tokens) {
       const clean = token.toLowerCase().replace(/[.,!?;:()"]/g, "");
-      if (clean.startsWith(strippedBase) && clean.length >= 3) {
+      if (clean.startsWith(strippedBase)) {
         clozeTarget = token;
         break;
       }
@@ -1600,7 +1615,7 @@ function matchesInflectedForm(base, token, gender) {
     gender.startsWith("feminine") ||
     gender.startsWith("neuter")
   ) {
-    const nounStem = lowerBase.replace(/(a|e|i|o|u)$/, "");
+    const nounStem = lowerBase;
     const nounEndings = [
       "",
       "a",
@@ -1673,9 +1688,16 @@ function matchesInflectedForm(base, token, gender) {
       return true;
   }
 
-  // --- EXPRESSIONS ---
+  // --- EXPRESSIONS (including "se" verbs) ---
   if (gender.startsWith("expression")) {
-    if (lowerToken.includes(lowerBase.split(" ")[0])) return true;
+    // Case: "verb se"
+    if (lowerBase.endsWith(" se")) {
+      const verbBase = lowerBase.replace(/\s+se$/, ""); // strip " se"
+      if (token === "se") return true;
+      if (matchesInflectedForm(verbBase, token, "verb")) return true;
+    }
+    // Otherwise treat as flat string
+    return lowerToken === lowerBase;
   }
 
   return false;
@@ -1683,6 +1705,10 @@ function matchesInflectedForm(base, token, gender) {
 
 function applyInflection(base, clozedForm, gender) {
   const lowerBase = base.toLowerCase();
+  // --- EXPRESSIONS (leave untouched, but preserve " se") ---
+  if (gender.startsWith("expression")) {
+    return base;
+  }
 
   // --- NOUNS ---
   if (
@@ -1705,7 +1731,10 @@ function applyInflection(base, clozedForm, gender) {
       "ove",
     ];
     const match = endings.find((e) => clozedForm.endsWith(e));
-    return lowerBase + (match || "");
+    if (match) {
+      return lowerBase.endsWith(match) ? lowerBase : lowerBase + match;
+    }
+    return lowerBase;
   }
 
   // --- ADJECTIVES ---
@@ -1770,8 +1799,8 @@ function generateClozeDistractors(baseWord, clozedForm, CEFR, gender) {
   const baseCandidates = results.filter((r) => {
     const ord = r.ord.split(",")[0].trim().toLowerCase();
     if (!ord || ord === formattedBase) return false;
-    if (ord.includes(" ")) return false;
-    if (ord.length < 3 || ord.length > 12) return false;
+    if (ord.includes(" ") && !gender.startsWith("expression")) return false;
+    if (ord.length > 12) return false;
     if (
       r.gender &&
       !r.gender.toLowerCase().startsWith(gender.slice(0, 2).toLowerCase())
@@ -1846,6 +1875,11 @@ function generateClozeDistractors(baseWord, clozedForm, CEFR, gender) {
     strictDistractors = strictDistractors
       .concat(shuffleArray(extra))
       .slice(0, 3);
+  }
+
+  // Special handling: if the base is a "se" verb, force distractors to end with " se"
+  if (gender.startsWith("expression") && baseWord.endsWith(" se")) {
+    strictDistractors = strictDistractors.map((d) => d + " se");
   }
 
   return strictDistractors;
