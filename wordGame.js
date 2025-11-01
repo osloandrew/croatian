@@ -948,21 +948,21 @@ function renderClozeGameUI(
   const exampleText = matchingEntry?.eksempel || "";
   const englishText = wordObj.sentenceTranslation || "";
 
-  const norwegianSentences = exampleText
+  const croatianSentences = exampleText
     .split(/(?<=[.!?])\s+/)
     .filter((s) => s.trim() !== "");
   const englishSentences = englishText
     .split(/(?<=[.!?])\s+/)
     .filter((s) => s.trim() !== "");
 
-  let firstNorwegian = "[Mangler norsk setning]";
+  let firstCroatian = "[Croatian Sentence Not Found]";
   // Quick fix for multi-word nouns like "Sjeverna Amerika"
   if (wordObj.eksempel && wordObj.eksempel.toLowerCase().includes(baseWord))
-    firstNorwegian = wordObj.eksempel;
+    firstCroatian = wordObj.eksempel;
   let matchingEnglish = "";
 
-  for (let i = 0; i < norwegianSentences.length; i++) {
-    const nSent = norwegianSentences[i];
+  for (let i = 0; i < croatianSentences.length; i++) {
+    const nSent = croatianSentences[i];
     const lower = nSent.toLowerCase().normalize("NFC");
     const base = baseWord.toLowerCase().normalize("NFC");
     const isExpression = wordObj.gender === "expression";
@@ -981,7 +981,7 @@ function renderClozeGameUI(
         if (t === "se" && matchesInflectedForm(verbBase, next, "verb"))
           found = true;
         if (found) {
-          firstNorwegian = nSent;
+          firstCroatian = nSent;
           break;
         }
       }
@@ -990,22 +990,22 @@ function renderClozeGameUI(
       for (const token of tokens) {
         const clean = token.toLowerCase().replace(/[.,!?;:()"]/g, "");
         if (matchesInflectedForm(base, clean, wordObj.gender)) {
-          firstNorwegian = nSent;
-          const matchingIndex = norwegianSentences.findIndex(
-            (s) => s === firstNorwegian
+          firstCroatian = nSent;
+          const matchingIndex = croatianSentences.findIndex(
+            (s) => s === firstCroatian
           );
           matchingEnglish =
             matchingIndex >= 0 ? englishSentences[matchingIndex] || "" : "";
           break;
         }
       }
-      if (firstNorwegian !== "[Mangler norsk setning]") break;
+      if (firstCroatian !== "[Mangler norsk setning]") break;
     }
   }
 
   // Try to find and blank the cloze target
   let clozeTarget = null;
-  const lowerSentence = firstNorwegian.toLowerCase();
+  const lowerSentence = firstCroatian.toLowerCase();
   const lowerBaseWord = baseWord.toLowerCase();
 
   if (
@@ -1014,7 +1014,7 @@ function renderClozeGameUI(
   ) {
     if (baseWord.endsWith(" se")) {
       const verbBase = baseWord.replace(/\s+se$/, "");
-      const tokens = firstNorwegian.match(/[\p{L}-]+/gu) || [];
+      const tokens = firstCroatian.match(/[\p{L}-]+/gu) || [];
 
       for (let i = 0; i < tokens.length; i++) {
         const token = tokens[i].toLowerCase();
@@ -1063,7 +1063,7 @@ function renderClozeGameUI(
       }
     } else {
       const parts = baseWord.split(/\s+/); // e.g. ["dobro","jutro"]
-      const tokens = firstNorwegian.match(/[\p{L}-]+/gu) || [];
+      const tokens = firstCroatian.match(/[\p{L}-]+/gu) || [];
 
       for (let i = 0; i <= tokens.length - parts.length; i++) {
         const slice = tokens
@@ -1077,16 +1077,14 @@ function renderClozeGameUI(
 
       // still allow substring fallback if not found
       if (!clozeTarget && baseWord.length > 2) {
-        const normalizedSentence = firstNorwegian
-          .normalize("NFC")
-          .toLowerCase();
+        const normalizedSentence = firstCroatian.normalize("NFC").toLowerCase();
         if (normalizedSentence.includes(baseWord.toLowerCase())) {
           clozeTarget = baseWord;
         }
       }
     }
   } else {
-    const tokens = firstNorwegian.match(/[\p{L}-]+/gu) || [];
+    const tokens = firstCroatian.match(/[\p{L}-]+/gu) || [];
 
     for (const token of tokens) {
       const clean = token.toLowerCase().replace(/[.,!?;:()"]/g, "");
@@ -1100,13 +1098,13 @@ function renderClozeGameUI(
   let sentenceWithBlank;
 
   console.log("[CLOZE] Base:", baseWord);
-  console.log("[CLOZE] Sentence:", firstNorwegian);
+  console.log("[CLOZE] Sentence:", firstCroatian);
   console.log("[CLOZE] Found target:", clozeTarget);
 
   if (clozeTarget) {
     correctTranslation = clozeTarget;
     wordObj.clozeAnswer = clozeTarget.trim(); // ✅ store the discovered full answer, e.g. "igrati se"
-    sentenceWithBlank = firstNorwegian.replace(clozeTarget, blank);
+    sentenceWithBlank = firstCroatian.replace(clozeTarget, blank);
   } else {
     console.warn("❌ No cloze target found — switching to flashcard fallback.");
 
@@ -1680,16 +1678,16 @@ async function fetchRandomWord() {
     );
   }
 
-  // Filter out words where the Norwegian word and its English translation are identical
+  // Filter out words where the Croatian word and its English translation are identical
   filteredResults = filteredResults.filter((r) => {
-    // Split and trim the Norwegian word (handle comma-separated words)
-    const norwegianWord = r.ord.split(",")[0].trim().toLowerCase();
+    // Split and trim the Croatian word (handle comma-separated words)
+    const croatianWord = r.ord.split(",")[0].trim().toLowerCase();
 
     // Split and trim the English translation (handle comma-separated translations)
     const englishTranslation = r.engelsk.split(",")[0].trim().toLowerCase();
 
-    // Return true if the Norwegian and English words are not the same
-    return norwegianWord !== englishTranslation;
+    // Return true if the Croatian and English words are not the same
+    return croatianWord !== englishTranslation;
   });
 
   // If no words match the filters, return a message
