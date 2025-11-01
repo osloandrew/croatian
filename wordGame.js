@@ -317,34 +317,6 @@ async function startWordGame() {
   cefrSelect.disabled = false;
   cefrFilterContainer.classList.remove("disabled");
 
-  // --- TEMP: Force the game to load a random expression for testing ---
-  const expressionPool = results.filter(
-    (r) => r.gender && r.gender.toLowerCase().startsWith("expression")
-  );
-
-  if (expressionPool.length > 0) {
-    const forced =
-      expressionPool[Math.floor(Math.random() * expressionPool.length)];
-    console.log("🧩 Forced expression test:", forced.ord, forced.engelsk);
-
-    const baseWord = forced.ord.split(",")[0].trim().toLowerCase();
-    const clozeDistractors = generateClozeDistractors(
-      baseWord,
-      baseWord,
-      forced.CEFR,
-      forced.gender
-    );
-
-    // Make sure we have at least 4 choices
-    const allChoices = ensureUniqueDisplayedValues(
-      shuffleArray([baseWord, ...clozeDistractors])
-    ).slice(0, 4);
-
-    renderClozeGameUI(forced, allChoices, baseWord, false, forced.engelsk);
-    renderStats();
-    return; // stop normal flow
-  }
-
   // Check if all available words have been answered correctly
   const totalWords = results.filter(
     (r) => r.CEFR === currentCEFR && !noRandom.includes(r.ord.toLowerCase())
