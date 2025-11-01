@@ -2383,31 +2383,20 @@ function generateClozeDistractors(baseWord, clozedForm, CEFR, gender) {
       .slice(0, 3);
   }
 
+  // --- Final fallback: use real existing lemmas only, no fabricated strings ---
   if (strictDistractors.length < 3) {
     const extra = results
-      .map((r) => {
-        const raw = r.ord.split(",")[0].trim();
-        let inflectedForm = isUninflected
-          ? raw
-          : applyInflection(raw, gender, formattedClozed);
-
-        // 🔧 enforce same visible morphological ending pattern for all POS
-        if (!isUninflected) {
-          const endMatch = formattedClozed.match(/([a-zćčđšž]{1,4})$/i);
-          if (endMatch) {
-            const stem = inflectedForm.replace(/([a-zćčđšž]{1,4})$/i, "");
-            inflectedForm = stem + endMatch[1];
-          }
-        }
-
-        return inflectedForm;
-      })
+      .map((r) => r.ord.split(",")[0].trim().toLowerCase())
       .filter(
         (w) =>
           w &&
-          w.toLowerCase() !== formattedClozed &&
-          endingPattern.test(w.toLowerCase()) &&
-          /^[a-zA-ZæøåÆØÅ]/.test(w) === matchCapitalization
+          w !== formattedBase &&
+          w !== formattedClozed &&
+          /^[\p{L}-]+$/u.test(w) &&
+          !w.includes(" ") &&
+          !bannedWordClasses.some((b) =>
+            (gender || "").toLowerCase().startsWith(b)
+          )
       );
 
     strictDistractors = strictDistractors
