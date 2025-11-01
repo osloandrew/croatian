@@ -317,6 +317,34 @@ async function startWordGame() {
   cefrSelect.disabled = false;
   cefrFilterContainer.classList.remove("disabled");
 
+  // --- TEMP: Force the game to load a random expression for testing ---
+  const expressionPool = results.filter(
+    (r) => r.gender && r.gender.toLowerCase().startsWith("expression")
+  );
+
+  if (expressionPool.length > 0) {
+    const forced =
+      expressionPool[Math.floor(Math.random() * expressionPool.length)];
+    console.log("🧩 Forced expression test:", forced.ord, forced.engelsk);
+
+    const baseWord = forced.ord.split(",")[0].trim().toLowerCase();
+    const clozeDistractors = generateClozeDistractors(
+      baseWord,
+      baseWord,
+      forced.CEFR,
+      forced.gender
+    );
+
+    // Make sure we have at least 4 choices
+    const allChoices = ensureUniqueDisplayedValues(
+      shuffleArray([baseWord, ...clozeDistractors])
+    ).slice(0, 4);
+
+    renderClozeGameUI(forced, allChoices, baseWord, false, forced.engelsk);
+    renderStats();
+    return; // stop normal flow
+  }
+
   // Check if all available words have been answered correctly
   const totalWords = results.filter(
     (r) => r.CEFR === currentCEFR && !noRandom.includes(r.ord.toLowerCase())
@@ -503,6 +531,16 @@ async function startWordGame() {
     "Showing " + (isClozeQuestion ? "CLOZE" : "FLASHCARD") + " question for:",
     randomWordObj.ord
   );
+
+  if (isClozeQuestion) {
+    console.log(
+      `[CLOZE] Attempting cloze for: "${randomWordObj.ord}" (${randomWordObj.gender}, ${randomWordObj.CEFR})`
+    );
+  } else {
+    console.log(
+      `[FLASHCARD] Showing regular question for: "${randomWordObj.ord}"`
+    );
+  }
 
   if (isClozeQuestion) {
     const baseWord = randomWordObj.ord.split(",")[0].trim().toLowerCase();
@@ -924,8 +962,11 @@ function renderClozeGameUI(
   } else if (wordObj.CEFR === "C") {
     cefrLabel = '<div class="game-cefr-label hard">C</div>';
   }
-  correctTranslation = clozedWordForm;
-  const baseWord = wordObj.ord.split(",")[0].trim().toLowerCase();
+  let baseWord = wordObj.ord.split(",")[0].trim().toLowerCase(); // keep this
+  if (wordObj.gender.startsWith("expression") && baseWord.includes(" ")) {
+    // preserve the full expression (e.g., "dogoditi se")
+    baseWord = wordObj.ord.trim().toLowerCase();
+  }
   const matchingEntry = results.find(
     (r) =>
       r.ord.toLowerCase() === wordObj.ord.toLowerCase() &&
@@ -943,6 +984,9 @@ function renderClozeGameUI(
     .filter((s) => s.trim() !== "");
 
   let firstNorwegian = "[Mangler norsk setning]";
+  // Quick fix for multi-word nouns like "Sjeverna Amerika"
+  if (wordObj.eksempel && wordObj.eksempel.toLowerCase().includes(baseWord))
+    firstNorwegian = wordObj.eksempel;
   let matchingEnglish = "";
 
   for (let i = 0; i < norwegianSentences.length; i++) {
@@ -951,25 +995,21 @@ function renderClozeGameUI(
     const base = baseWord.toLowerCase().normalize("NFC");
     const isExpression = wordObj.gender === "expression";
 
-    if (isExpression) {
-      const parts = baseWord.split(/\s+/); // e.g., ['ende', 'opp']
+    if (isExpression && baseWord.endsWith(" se")) {
+      const verbBase = baseWord.replace(/\s+se$/, "");
       const tokens = nSent.match(/[\p{L}-]+/gu) || [];
-
-      for (let i = 0; i < tokens.length - (parts.length - 1); i++) {
-        const slice = tokens.slice(i, i + parts.length);
-        const [first, ...rest] = slice;
-
-        if (
-          matchesInflectedForm(parts[0], first, "verb") &&
-          rest.map((r) => r.toLowerCase()).join(" ") ===
-            parts.slice(1).join(" ")
-        ) {
+      let found = false;
+      for (let i = 0; i < tokens.length; i++) {
+        const t = tokens[i].toLowerCase();
+        const next = tokens[i + 1]?.toLowerCase();
+        // verb + se
+        if (matchesInflectedForm(verbBase, t, "verb") && next === "se")
+          found = true;
+        // se + verb
+        if (t === "se" && matchesInflectedForm(verbBase, next, "verb"))
+          found = true;
+        if (found) {
           firstNorwegian = nSent;
-          const matchingIndex = norwegianSentences.findIndex(
-            (s) => s === firstNorwegian
-          );
-          matchingEnglish =
-            matchingIndex >= 0 ? englishSentences[matchingIndex] || "" : "";
           break;
         }
       }
@@ -996,7 +1036,10 @@ function renderClozeGameUI(
   const lowerSentence = firstNorwegian.toLowerCase();
   const lowerBaseWord = baseWord.toLowerCase();
 
-  if (wordObj.gender === "expression") {
+  if (
+    wordObj.gender.startsWith("expression") ||
+    (wordObj.gender.startsWith("interjection") && baseWord.includes(" "))
+  ) {
     if (baseWord.endsWith(" se")) {
       const verbBase = baseWord.replace(/\s+se$/, "");
       const tokens = firstNorwegian.match(/[\p{L}-]+/gu) || [];
@@ -1006,34 +1049,76 @@ function renderClozeGameUI(
         const next = tokens[i + 1]?.toLowerCase();
         const prev = tokens[i - 1]?.toLowerCase();
 
-        // verb + se
+        // Case 1: verb + se
         if (matchesInflectedForm(verbBase, token, "verb") && next === "se") {
           clozeTarget = tokens[i] + " " + tokens[i + 1];
           break;
         }
-        // se + verb
+
+        // Case 2: se + verb
         if (token === "se" && matchesInflectedForm(verbBase, next, "verb")) {
           clozeTarget = tokens[i] + " " + tokens[i + 1];
           break;
         }
+
+        // ✅ Case 3: se precedes verb but separated by punctuation (rare)
+        if (
+          token === "se" &&
+          matchesInflectedForm(verbBase, tokens[i + 2]?.toLowerCase(), "verb")
+        ) {
+          clozeTarget = tokens[i] + " " + tokens[i + 2];
+          break;
+        }
+
+        // ✅ Case 4: verb precedes se but separated by punctuation
+        if (
+          matchesInflectedForm(verbBase, token, "verb") &&
+          tokens[i + 2]?.toLowerCase() === "se"
+        ) {
+          clozeTarget = tokens[i] + " " + tokens[i + 2];
+          break;
+        }
+      }
+
+      // ✅ If still no match, fallback to verb-only but force-attach "se"
+      if (!clozeTarget) {
+        const verbMatch = tokens.find((t) =>
+          matchesInflectedForm(verbBase, t.toLowerCase(), "verb")
+        );
+        if (verbMatch) {
+          clozeTarget = `${verbMatch} se`;
+        }
       }
     } else {
-      // fallback: simple substring match for non-"se" expressions
-      const normalizedBase = baseWord.normalize("NFC").toLowerCase();
-      const normalizedSentence = firstNorwegian.normalize("NFC").toLowerCase();
-      if (normalizedSentence.includes(normalizedBase)) {
-        clozeTarget = baseWord;
+      const parts = baseWord.split(/\s+/); // e.g. ["dobro","jutro"]
+      const tokens = firstNorwegian.match(/[\p{L}-]+/gu) || [];
+
+      for (let i = 0; i <= tokens.length - parts.length; i++) {
+        const slice = tokens
+          .slice(i, i + parts.length)
+          .map((t) => t.toLowerCase());
+        if (slice.join(" ") === baseWord.toLowerCase()) {
+          clozeTarget = tokens.slice(i, i + parts.length).join(" ");
+          break;
+        }
+      }
+
+      // still allow substring fallback if not found
+      if (!clozeTarget && baseWord.length > 2) {
+        const normalizedSentence = firstNorwegian
+          .normalize("NFC")
+          .toLowerCase();
+        if (normalizedSentence.includes(baseWord.toLowerCase())) {
+          clozeTarget = baseWord;
+        }
       }
     }
   } else {
     const tokens = firstNorwegian.match(/[\p{L}-]+/gu) || [];
 
-    // New vowel-stripping rule
-    const strippedBase = lowerBaseWord.replace(/[aeiou]+$/i, "");
-
     for (const token of tokens) {
       const clean = token.toLowerCase().replace(/[.,!?;:()"]/g, "");
-      if (clean.startsWith(strippedBase)) {
+      if (matchesInflectedForm(lowerBaseWord, clean, wordObj.gender)) {
         clozeTarget = token;
         break;
       }
@@ -1041,7 +1126,14 @@ function renderClozeGameUI(
   }
 
   let sentenceWithBlank;
+
+  console.log("[CLOZE] Base:", baseWord);
+  console.log("[CLOZE] Sentence:", firstNorwegian);
+  console.log("[CLOZE] Found target:", clozeTarget);
+
   if (clozeTarget) {
+    correctTranslation = clozeTarget;
+    wordObj.clozeAnswer = clozeTarget.trim(); // ✅ store the discovered full answer, e.g. "igrati se"
     sentenceWithBlank = firstNorwegian.replace(clozeTarget, blank);
   } else {
     console.warn("❌ No cloze target found — switching to flashcard fallback.");
@@ -1065,6 +1157,146 @@ function renderClozeGameUI(
     renderWordGameUI(wordObj, uniqueDisplayedTranslations, false);
     return;
   }
+
+  // --- Normalize reflexive 'se' options so they match the sentence ---
+  let options = translations.map((t) => t.trim());
+  if (baseWord.endsWith(" se") && clozeTarget) {
+    const targetIsSeFirst = /^se\b/i.test(clozeTarget); // "se odmaramo" vs "odmaramo se"
+    const targetParts = clozeTarget.split(/\s+/);
+    const targetVerb = targetIsSeFirst ? targetParts[1] : targetParts[0];
+
+    // 1) Drop any stray single "se" option
+    options = options.filter((opt) => opt.toLowerCase() !== "se");
+
+    // 2) Make se-position consistent with the sentence's target
+    options = options.map((opt) => {
+      const hasSeFirst = /^se\b/i.test(opt);
+      const hasSeLast = /\bse$/i.test(opt);
+      if (targetIsSeFirst && hasSeLast) {
+        // "igram se" -> "se igram"
+        return ("se " + opt.replace(/\s*se$/i, "").trim()).trim();
+      }
+      if (!targetIsSeFirst && hasSeFirst) {
+        // "se igramo" -> "igramo se"
+        return (opt.replace(/^se\s+/i, "").trim() + " se").trim();
+      }
+      return opt;
+    });
+
+    // 3) Match morphology to the target form: infinitive OR finite person/number
+    const targetIsInfinitive = /(ti|ći)$/.test(targetVerb);
+
+    // classify and stem helpers (reuse for both branches)
+    const classOf = (form) => {
+      if (/(am|aš|amo|ate|aju|a)$/.test(form)) return "A"; // -ati class
+      if (/(im|iš|imo|ite|i)$/.test(form)) return "I"; // -iti class
+      if (
+        /(em|eš|emo|ete|ju|u|e)$/.test(form) &&
+        !/(am|aš|amo|ate|aju)$/.test(form)
+      )
+        return "E";
+      return null;
+    };
+    const stripEnding = (form) =>
+      form.replace(
+        /(amo|emo|imo|ate|ete|ite|aju|ju|am|em|im|aš|eš|iš|a|e|i|je|u)$/,
+        ""
+      );
+
+    if (targetIsInfinitive) {
+      // ➜ Target is like "se kupati": force distractors to **infinitive**
+      options = options.map((opt) => {
+        const parts = opt.split(/\s+/);
+        const vIx = /^se\b/i.test(opt) ? 1 : 0; // verb slot
+        if (!parts[vIx]) return opt;
+
+        const verbForm = parts[vIx];
+        if (/(ti|ći)$/.test(verbForm)) return opt; // already infinitive
+
+        const cls = classOf(verbForm);
+        const stem = stripEnding(verbForm);
+
+        // build an infinitive from a present stem (light heuristics)
+        let inf;
+        if (cls === "A") inf = stem + "ati";
+        else if (cls === "I") inf = stem + "iti";
+        else {
+          // E-class is messy: many are actually -ati or -jeti in the lemma.
+          // Favor -ati for stems ending in -j / -ij (smij- → smijati),
+          // and for common -ov/-ev patterns try zvati (zov- → zvati) as a nudge.
+          if (/(ij|j)$/.test(stem)) inf = stem + "ati"; // smij- → smijati
+          else if (/ov$|ev$/i.test(stem))
+            inf = stem.slice(0, -2) + "vati"; // zov- → zvati, pev- → pevati
+          else inf = stem + "iti"; // safer fallback than "eti"
+        }
+
+        parts[vIx] = inf;
+        return parts.join(" ");
+      });
+    } else {
+      // ➜ Target is finite: keep your existing finite-person/number matcher
+      const targetEnding = (targetVerb.match(
+        /(amo|emo|imo|ate|ete|ite|aju|ju|am|em|im|aš|eš|iš|a|e|i|je|u)$/
+      ) || [null])[0];
+
+      if (targetEnding) {
+        const buildWithTarget = (stem, cls, tgtEnd) => {
+          let end = tgtEnd;
+          if (end === "je" && !/(ij|smij|nij)$/.test(stem)) end = "e";
+          if (end === "u") end = cls === "E" ? "u" : cls === "A" ? "aju" : "ju";
+          if (/^(a|e|i)$/.test(end)) {
+            if (cls === "A") end = "a";
+            else if (cls === "I") end = "i";
+            else if (cls === "E") end = end === "i" ? "e" : end;
+          }
+          return stem + end;
+        };
+
+        options = options.map((opt) => {
+          const parts = opt.split(/\s+/);
+          const vIx = /^se\b/i.test(opt) ? 1 : 0;
+          if (!parts[vIx]) return opt;
+
+          const verbForm = parts[vIx];
+          const cls = classOf(verbForm);
+          const stem = stripEnding(verbForm);
+          parts[vIx] = stem
+            ? buildWithTarget(stem, cls, targetEnding)
+            : verbForm;
+          return parts.join(" ");
+        });
+      }
+    }
+
+    // 4) Guarantee the discovered target is in the options set
+    const cleanFound = clozeTarget.trim();
+    const provided = (clozedWordForm || "").trim();
+    options = options.map((opt) => (opt === provided ? cleanFound : opt));
+    if (!options.includes(cleanFound)) {
+      // Put the correct form in and keep 4 unique choices
+      options[0] = cleanFound;
+      options = ensureUniqueDisplayedValues(shuffleArray(options));
+      if (options.length > 4) options = options.slice(0, 4);
+    }
+  } else {
+    // Non-reflexive: keep what's already computed
+    options = translations;
+  }
+
+  // --- Capitalize or lowercase all options based on whether the blank starts the sentence ---
+  const blankIndex = sentenceWithBlank.indexOf("___");
+  const capitalize =
+    blankIndex === 0 || /^[\s"“'(]*___/.test(sentenceWithBlank);
+  options = options.map(
+    (o) =>
+      o.charAt(0)[capitalize ? "toUpperCase" : "toLowerCase"]() + o.slice(1)
+  );
+  if (wordObj.clozeAnswer)
+    wordObj.clozeAnswer =
+      wordObj.clozeAnswer
+        .charAt(0)
+        [capitalize ? "toUpperCase" : "toLowerCase"]() +
+      wordObj.clozeAnswer.slice(1);
 
   gameContainer.innerHTML = `
     <!-- Session Stats Section -->
@@ -1125,7 +1357,7 @@ function renderClozeGameUI(
   
     <!-- Translations Grid Section -->
     <div class="game-grid">
-      ${translations
+      ${options
         .map(
           (translation, index) => `
           <div class="game-translation-card" data-id="${wordId}" data-index="${index}">
@@ -1183,7 +1415,9 @@ async function handleTranslationClick(
   });
 
   // Extract the part before the comma for both correct and selected translations
-  const correctTranslationPart = correctTranslation.split(",")[0].trim();
+  const correctTranslationPart = (wordObj.clozeAnswer || correctTranslation)
+    .split(",")[0]
+    .trim();
   const selectedTranslationPart = selectedTranslation.split(",")[0].trim();
 
   totalQuestions++; // Increment total questions for this level
@@ -1606,17 +1840,80 @@ function matchesInflectedForm(base, token, gender) {
   const lowerBase = base.toLowerCase();
   const lowerToken = token.toLowerCase();
 
-  // Exact match
+  // --- 1. Exact match ---
   if (lowerToken === lowerBase) return true;
 
-  // --- NOUNS ---
+  // --- 2. Skip prefix heuristics for short words (avoid "Ana" → "a") ---
+  if (lowerBase.length <= 2) return false;
+
+  // --- 3. Nouns (comprehensive Croatian declension logic) ---
   if (
     gender.startsWith("masculine") ||
     gender.startsWith("feminine") ||
     gender.startsWith("neuter")
   ) {
-    const nounStem = lowerBase;
-    const nounEndings = [
+    const lemma = lowerBase;
+    const token = lowerToken;
+
+    // feminine -a nouns (juha → juhu, žena → ženu, knjiga → knjigu)
+    if (lemma.endsWith("a") && gender.startsWith("feminine")) {
+      const stem = lemma.slice(0, -1);
+      const femEndings = [
+        "a", // N sg
+        "e", // G sg, N pl
+        "i", // D sg, L sg
+        "u", // A sg
+        "o", // V sg
+        "om", // I sg
+        "ama", // D/L/I pl
+      ];
+      if (femEndings.some((e) => token === stem + e)) return true;
+    }
+
+    // feminine non-a nouns (noć → noći, stvar → stvarima)
+    if (!lemma.endsWith("a") && gender.startsWith("feminine")) {
+      const femAltEndings = ["", "i", "ju", "ima", "ima", "i", "ju"];
+      if (femAltEndings.some((e) => token === lemma + e)) return true;
+    }
+
+    // neuter -o nouns (selo → selu, sela)
+    if (lemma.endsWith("o") && gender.startsWith("neuter")) {
+      const stem = lemma.slice(0, -1);
+      const neutEndings = ["o", "a", "u", "om", "ima", "u", "m"];
+      if (neutEndings.some((e) => token === stem + e)) return true;
+    }
+
+    // neuter -e nouns (more → mora, moru)
+    if (lemma.endsWith("e") && gender.startsWith("neuter")) {
+      const stem = lemma.slice(0, -1);
+      const neutEndings = ["e", "a", "u", "em", "ima", "u", "m"];
+      if (neutEndings.some((e) => token === stem + e)) return true;
+    }
+
+    // masculine consonant nouns (stol, student)
+    if (
+      gender.startsWith("masculine") ||
+      /[bcčćdđfghjklmnprsštvzž]$/.test(lemma)
+    ) {
+      const stem = lemma;
+      const mascEndings = [
+        "", // N sg
+        "a", // G sg, A sg animate
+        "u", // D/L sg
+        "om", // I sg
+        "e", // V sg
+        "i", // N pl
+        "ovi",
+        "evi", // N pl variants
+        "ima", // D/L/I pl
+        "e", // A pl
+        "a", // G pl
+      ];
+      if (mascEndings.some((e) => token === stem + e)) return true;
+    }
+
+    // fallback catch-all: if token is same stem + frequent endings
+    const genericEndings = [
       "",
       "a",
       "e",
@@ -1629,20 +1926,14 @@ function matchesInflectedForm(base, token, gender) {
       "ima",
       "ovi",
       "evi",
-      "i",
-      "u",
       "ju",
     ];
-    if (nounEndings.some((ending) => lowerToken === nounStem + ending))
-      return true;
+    if (genericEndings.some((e) => token === lemma + e)) return true;
   }
 
-  // --- ADJECTIVES ---
+  // --- 4. Adjectives ---
   if (gender.startsWith("adjective")) {
-    // Strip common endings: -an, -en, -on, -in, -ar, -er, -or
     const adjStem = lowerBase.replace(/(an|en|on|in|ar|er|or)$/, "");
-
-    // For "dobar" this leaves "dob"
     const adjEndings = [
       "",
       "i",
@@ -1659,16 +1950,14 @@ function matchesInflectedForm(base, token, gender) {
       "ro",
       "rog",
       "rom",
-      "ru", // ✅ needed for dobar-type adjectives
+      "ru",
     ];
-
     if (adjEndings.some((ending) => lowerToken === adjStem + ending))
       return true;
   }
 
-  // --- VERBS ---
+  // --- 5. Verbs (comprehensive) ---
   if (gender.startsWith("verb")) {
-    const verbStem = lowerBase.replace(/(ti|ći)$/, "");
     const verbEndings = [
       "ti",
       "ći",
@@ -1683,101 +1972,333 @@ function matchesInflectedForm(base, token, gender) {
       "li",
       "lo",
       "le",
+      "o",
+      "ao",
+      "ala",
+      "ali",
+      "ale",
     ];
-    if (verbEndings.some((ending) => lowerToken === verbStem + ending))
+
+    // --- 5a. Handle -jeti verbs (voljeti, željeti, vidjeti) comprehensively ---
+    if (/jeti$/.test(lowerBase)) {
+      const jetiStem = lowerBase.replace(/jeti$/, "");
+
+      // Two common stems: volj- / volj → volj + endings (used for voljeti: voliš, vole)
+      // and vowel-shifted stem: volj → vol(i) (used for volim)
+      const altStems = [
+        jetiStem.endsWith("je") ? jetiStem.slice(0, -2) + "i" : jetiStem + "i", // vowel change stem
+        jetiStem.replace(/je$/, ""), // plain je-drop stem
+        jetiStem, // raw stem
+      ];
+
+      // Extended verb endings: present, infinitive, participles
+      const jetiEndings = [
+        "m",
+        "š",
+        "",
+        "mo",
+        "te",
+        "ju", // present
+        "o",
+        "la",
+        "li",
+        "le",
+        "lo", // past
+        "ti",
+        "ći", // infinitive variants
+      ];
+
+      if (
+        altStems.some((stem) =>
+          jetiEndings.some((end) => lowerToken === stem + end)
+        )
+      )
+        return true;
+    }
+    // --- 5b. Base and simple stem ---
+    const baseStem = lowerBase.replace(/(ti|ći)$/, "");
+    if (verbEndings.some((ending) => lowerToken === baseStem + ending))
       return true;
+
+    // --- 5c. Handle je → ije alternation (razumjeti → razumijem) ---
+    const altStem1 = baseStem.replace(/je$/, "ije");
+    if (verbEndings.some((ending) => lowerToken === altStem1 + ending))
+      return true;
+
+    // --- 5d. Handle -ovati / -evati verbs (putovati → putujem, kupovati → kupujem) ---
+    if (/(ovati|evati)$/.test(lowerBase)) {
+      const ovStem = lowerBase.replace(/(ovati|evati)$/, "uj");
+      const ovEndings = [
+        "em",
+        "eš",
+        "e",
+        "emo",
+        "ete",
+        "u",
+        "o",
+        "la",
+        "li",
+        "le",
+        "lo",
+      ];
+      if (ovEndings.some((e) => lowerToken === ovStem + e)) return true;
+    }
+
+    // --- 5d. Handle stem alternations for broad verb families ---
+    // Covers zvati→zovem, brijati→brijem, bojati→bojim, sjesti→sjednem, etc.
+
+    const altVerbPatterns = [
+      // zvati-type (a → o shift)
+      {
+        regex: /^(.*)vati$/,
+        replacements: ["$1ov"],
+        endings: [
+          "em",
+          "eš",
+          "e",
+          "emo",
+          "ete",
+          "u",
+          "o",
+          "la",
+          "li",
+          "le",
+          "lo",
+        ],
+      },
+
+      // -jati verbs that insert j before endings (brijati → brijem)
+      {
+        regex: /^(.*)jati$/,
+        replacements: ["$1j"],
+        endings: [
+          "em",
+          "eš",
+          "e",
+          "emo",
+          "ete",
+          "u",
+          "o",
+          "la",
+          "li",
+          "le",
+          "lo",
+        ],
+      },
+
+      // -jati verbs that shift to -jim pattern (bojati → bojim)
+      {
+        regex: /^(.*)jati$/,
+        replacements: ["$1"],
+        endings: [
+          "im",
+          "iš",
+          "i",
+          "imo",
+          "ite",
+          "e",
+          "io",
+          "ila",
+          "ili",
+          "ile",
+          "ilo",
+        ],
+      },
+
+      // sjesti, leći, ležati, etc. (insert je/jeđ)
+      {
+        regex: /^(.*)sti$/,
+        replacements: ["$1jed", "$1jeđ"],
+        endings: [
+          "nem",
+          "neš",
+          "ne",
+          "nemo",
+          "nete",
+          "nu",
+          "o",
+          "la",
+          "li",
+          "le",
+          "lo",
+        ],
+      },
+    ];
+
+    for (const pattern of altVerbPatterns) {
+      const match = lowerBase.match(pattern.regex);
+      if (match) {
+        const stemBase = match[1];
+        for (const repl of pattern.replacements) {
+          const altStem = repl.replace(/\$1/g, stemBase);
+          if (pattern.endings.some((e) => lowerToken === altStem + e))
+            return true;
+        }
+      }
+    }
+
+    // --- 5e. Handle irregular frequent verbs ---
+    const irregularMap = {
+      biti: [
+        "sam",
+        "si",
+        "je",
+        "smo",
+        "ste",
+        "su",
+        "bio",
+        "bila",
+        "bilo",
+        "bili",
+        "bile",
+      ],
+      imati: [
+        "imam",
+        "imaš",
+        "ima",
+        "imamo",
+        "imate",
+        "imaju",
+        "imao",
+        "imala",
+      ],
+      moći: ["mogu", "možeš", "može", "možemo", "možete", "mogu"],
+      htjeti: [
+        "hoću",
+        "hoćeš",
+        "hoće",
+        "hoćemo",
+        "hoćete",
+        "će",
+        "ću",
+        "ćeš",
+        "će",
+        "ćemo",
+        "ćete",
+      ],
+      ići: ["idem", "ideš", "ide", "idemo", "idete", "idu", "išao", "išla"],
+      reći: ["rekao", "rekla", "rekli", "rečeš", "kaže", "kažem"],
+    };
+    if (irregularMap[lowerBase] && irregularMap[lowerBase].includes(lowerToken))
+      return true;
+
+    // --- 5e-bis. Handle -sati / -zati / -tati verbs (pisati→piše, plesati→pleše, gaziti→gazi etc.) ---
+    if (/(sati|zati|tati)$/.test(lowerBase)) {
+      // drop the final 'ati' and add 'še' or 'ze' depending on the stem
+      const sStem = lowerBase.replace(/sati$/, "š");
+      const zStem = lowerBase.replace(/zati$/, "ž");
+      const tStem = lowerBase.replace(/tati$/, "t");
+      const presentEndings = ["em", "eš", "e", "emo", "ete", "u"];
+
+      if (
+        presentEndings.some(
+          (e) =>
+            lowerToken === sStem + e ||
+            lowerToken === zStem + e ||
+            lowerToken === tStem + e
+        )
+      )
+        return true;
+    }
+
+    // --- 5f. Fallback heuristic ---
+    if (lowerToken.startsWith(baseStem.slice(0, -1))) return true;
   }
 
-  // --- EXPRESSIONS (including "se" verbs) ---
+  // --- 6. Expressions (including "se" verbs) ---
   if (gender.startsWith("expression")) {
-    // Case: "verb se"
     if (lowerBase.endsWith(" se")) {
-      const verbBase = lowerBase.replace(/\s+se$/, ""); // strip " se"
+      const verbBase = lowerBase.replace(/\s+se$/, "");
       if (token === "se") return true;
       if (matchesInflectedForm(verbBase, token, "verb")) return true;
     }
-    // Otherwise treat as flat string
     return lowerToken === lowerBase;
   }
 
   return false;
 }
 
-function applyInflection(base, clozedForm, gender) {
+function applyInflection(base, gender, targetTokenInSentence) {
+  if (!base) return base;
+
   const lowerBase = base.toLowerCase();
-  // --- EXPRESSIONS (leave untouched, but preserve " se") ---
-  if (gender.startsWith("expression")) {
-    return base;
+  const lowerToken = targetTokenInSentence?.toLowerCase?.() || null;
+
+  // --- 1. If we know the actual token from the sentence, try to mirror its pattern ---
+  if (lowerToken) {
+    // Match je → ije alternation
+    if (lowerBase.endsWith("jeti") && lowerToken.includes("ij"))
+      return lowerBase.replace(/jeti$/, "ijem");
+
+    // Match jeti → im contraction
+    if (lowerBase.endsWith("jeti") && !lowerToken.includes("ij"))
+      return lowerBase.replace(/jeti$/, "im");
+
+    // Match consonant softening (rough)
+    if (lowerBase.endsWith("sati") && lowerToken.includes("š"))
+      return lowerBase.replace(/sati$/, "šem");
+
+    if (lowerBase.endsWith("ti") && lowerToken.includes("m"))
+      return lowerBase.replace(/ti$/, "m");
   }
 
-  // --- NOUNS ---
+  // --- 2. Fallbacks by POS ---
+  if (gender.startsWith("verb")) {
+    // Copy the last 2–3 letters of the correct form’s ending
+    const match = lowerToken ? lowerToken.match(/(am|em|im|aju|eju|u)$/) : null;
+    if (match) {
+      const ending = match[1];
+      const stem = lowerBase.replace(/(ti|ći)$/, "");
+      return stem + ending; // pričati → pričaju, raditi → rade
+    }
+    // Basic heuristic: produce 1st person singular present form
+    // Covers -ati, -iti, -jeti, -ći verbs
+    if (lowerBase.endsWith("ati")) return lowerBase.replace(/ati$/, "am");
+    if (lowerBase.endsWith("iti")) return lowerBase.replace(/iti$/, "im");
+    if (lowerBase.endsWith("jeti")) return lowerBase.replace(/jeti$/, "im");
+    if (lowerBase.endsWith("ći")) return lowerBase.replace(/ći$/, "em"); // e.g. moći → mogu handled separately below
+
+    // Irregulars
+    const irregulars = {
+      biti: "sam",
+      imati: "imam",
+      moći: "mogu",
+      htjeti: "hoću",
+      ići: "idem",
+      reći: "kažem",
+      doći: "dođem",
+      vidjeti: "vidim",
+      željeti: "želim",
+      čuti: "čujem",
+      razumjeti: "razumijem",
+    };
+    if (irregulars[lowerBase]) return irregulars[lowerBase];
+  }
+
+  if (gender.startsWith("adjective")) {
+    // Simplify: return masculine singular nominative by default
+    if (
+      lowerBase.endsWith("an") ||
+      lowerBase.endsWith("en") ||
+      lowerBase.endsWith("on")
+    )
+      return lowerBase.replace(/n$/, "an");
+  }
+
   if (
     gender.startsWith("masculine") ||
     gender.startsWith("feminine") ||
     gender.startsWith("neuter")
   ) {
-    const endings = [
-      "a",
-      "e",
-      "i",
-      "o",
-      "u",
-      "om",
-      "em",
-      "ama",
-      "ima",
-      "ovi",
-      "eve",
-      "ove",
-    ];
-    const match = endings.find((e) => clozedForm.endsWith(e));
-    if (match) {
-      return lowerBase.endsWith(match) ? lowerBase : lowerBase + match;
-    }
+    // Nouns: return nominative singular
     return lowerBase;
   }
 
-  // --- ADJECTIVES ---
-  if (gender.startsWith("adjective")) {
-    const endings = [
-      "i",
-      "a",
-      "o",
-      "e",
-      "og",
-      "om",
-      "u",
-      "oj",
-      "ima",
-      "ri",
-      "ra",
-      "ro",
-      "rog",
-      "rom",
-      "ru",
-    ];
-    const match = endings.find((e) => clozedForm.endsWith(e));
-    return lowerBase.replace(/(an|en|on|in|ar|er|or)$/, "") + (match || "");
-  }
-
-  // --- VERBS ---
-  if (gender.startsWith("verb")) {
-    const stem = lowerBase.replace(/(ti|ći)$/, "");
-    const endings = [
-      "m",
-      "š",
-      "",
-      "mo",
-      "te",
-      "ju",
-      "e",
-      "la",
-      "li",
-      "lo",
-      "le",
-    ];
-    const match = endings.find((e) => clozedForm.endsWith(e));
-    return stem + (match || "ti");
+  if (gender.startsWith("expression")) {
+    if (lowerBase.endsWith(" se")) {
+      const verbBase = lowerBase.replace(/\s+se$/, "");
+      return applyInflection(verbBase, "verb", targetTokenInSentence) + " se";
+    }
   }
 
   return lowerBase;
@@ -1788,16 +2309,28 @@ function generateClozeDistractors(baseWord, clozedForm, CEFR, gender) {
   const formattedBase = baseWord.toLowerCase();
 
   const isUninflected = clozedForm.trim() === baseWord.trim(); // key fix
-
   const matchCapitalization = /^[A-ZÆØÅ]/.test(clozedForm);
-  const endingPattern = getEndingPattern(formattedClozed);
+
+  // --- derive a dynamic ending pattern from the actual clozed form ---
+  const dynamicEnding = formattedClozed.match(/([a-zćčđšž]{1,4})$/i);
+  const dynamicEndingPattern = dynamicEnding
+    ? new RegExp(dynamicEnding[1] + "$", "i")
+    : null;
+
+  // fallback to your existing general heuristic
+  const endingPattern =
+    dynamicEndingPattern || getEndingPattern(formattedClozed);
 
   const bannedWordClasses = ["numeral", "pronoun", "possessive", "determiner"];
-
   let strictDistractors = [];
-
+  const pos = (gender || "").toLowerCase();
   const baseCandidates = results.filter((r) => {
-    const ord = r.ord.split(",")[0].trim().toLowerCase();
+    const g = (r.gender || "").toLowerCase();
+    if (!g.startsWith(pos)) return false;
+    let ord = r.ord.split(",")[0].trim().toLowerCase();
+    if (r.gender.startsWith("expression") && r.ord.includes(" ")) {
+      ord = r.ord.trim().toLowerCase();
+    }
     if (!ord || ord === formattedBase) return false;
     if (ord.includes(" ") && !gender.startsWith("expression")) return false;
     if (ord.length > 12) return false;
@@ -1815,9 +2348,20 @@ function generateClozeDistractors(baseWord, clozedForm, CEFR, gender) {
   const inflected = baseCandidates
     .map((r) => {
       const raw = r.ord.split(",")[0].trim().toLowerCase();
-      return isUninflected
+      let inflectedForm = isUninflected
         ? raw
-        : applyInflection(raw, formattedClozed, gender);
+        : applyInflection(raw, gender, formattedClozed);
+
+      // 🔧 enforce same visible morphological ending pattern for all POS
+      if (!isUninflected) {
+        const endMatch = formattedClozed.match(/([a-zćčđšž]{1,4})$/i);
+        if (endMatch) {
+          const stem = inflectedForm.replace(/([a-zćčđšž]{1,4})$/i, "");
+          inflectedForm = stem + endMatch[1];
+        }
+      }
+
+      return inflectedForm;
     })
     .filter(
       (w) =>
@@ -1840,9 +2384,20 @@ function generateClozeDistractors(baseWord, clozedForm, CEFR, gender) {
       })
       .map((r) => {
         const raw = r.ord.split(",")[0].trim().toLowerCase();
-        return isUninflected
+        let inflectedForm = isUninflected
           ? raw
-          : applyInflection(raw, formattedClozed, gender);
+          : applyInflection(raw, gender, formattedClozed);
+
+        // 🔧 enforce same visible morphological ending pattern for all POS
+        if (!isUninflected) {
+          const endMatch = formattedClozed.match(/([a-zćčđšž]{1,4})$/i);
+          if (endMatch) {
+            const stem = inflectedForm.replace(/([a-zćčđšž]{1,4})$/i, "");
+            inflectedForm = stem + endMatch[1];
+          }
+        }
+
+        return inflectedForm;
       })
       .filter(
         (w) =>
@@ -1860,9 +2415,20 @@ function generateClozeDistractors(baseWord, clozedForm, CEFR, gender) {
     const extra = results
       .map((r) => {
         const raw = r.ord.split(",")[0].trim();
-        return isUninflected
+        let inflectedForm = isUninflected
           ? raw
-          : applyInflection(raw.toLowerCase(), formattedClozed, gender);
+          : applyInflection(raw, gender, formattedClozed);
+
+        // 🔧 enforce same visible morphological ending pattern for all POS
+        if (!isUninflected) {
+          const endMatch = formattedClozed.match(/([a-zćčđšž]{1,4})$/i);
+          if (endMatch) {
+            const stem = inflectedForm.replace(/([a-zćčđšž]{1,4})$/i, "");
+            inflectedForm = stem + endMatch[1];
+          }
+        }
+
+        return inflectedForm;
       })
       .filter(
         (w) =>
@@ -1877,9 +2443,52 @@ function generateClozeDistractors(baseWord, clozedForm, CEFR, gender) {
       .slice(0, 3);
   }
 
-  // Special handling: if the base is a "se" verb, force distractors to end with " se"
+  // --- Special handling for reflexive expressions ending in " se" ---
   if (gender.startsWith("expression") && baseWord.endsWith(" se")) {
-    strictDistractors = strictDistractors.map((d) => d + " se");
+    const reference = (
+      typeof correctTranslation === "string"
+        ? correctTranslation
+        : formattedClozed
+    )
+      .toLowerCase()
+      .trim();
+    const isPrefixSe = reference.startsWith("se ");
+
+    // 1️⃣ Pull distractors ONLY from other expressions ending in " se"
+    let reflexivePool = results
+      .filter(
+        (r) =>
+          r.gender?.toLowerCase().startsWith("expression") &&
+          r.ord.toLowerCase() !== baseWord &&
+          r.ord.toLowerCase().endsWith(" se") &&
+          r.CEFR === CEFR
+      )
+      .map((r) => r.ord.trim().toLowerCase());
+
+    // 2️⃣ If not enough, pad with any other "expression" from same CEFR
+    if (reflexivePool.length < 3) {
+      const fallbackPool = results
+        .filter(
+          (r) =>
+            r.gender?.toLowerCase().startsWith("expression") &&
+            r.ord.toLowerCase() !== baseWord &&
+            r.CEFR === CEFR
+        )
+        .map((r) => r.ord.trim().toLowerCase());
+      reflexivePool = reflexivePool.concat(fallbackPool);
+    }
+
+    // 3️⃣ Randomize and take 3 unique distractors
+    strictDistractors = shuffleArray(reflexivePool)
+      .filter((d) => d !== formattedClozed)
+      .slice(0, 3);
+
+    // 4️⃣ Align "se" position (prefix vs suffix)
+    strictDistractors = strictDistractors.map((d) => {
+      const clean = d.replace(/\bse\b/g, "").trim();
+      const reflexiveForm = isPrefixSe ? `se ${clean}` : `${clean} se`;
+      return reflexiveForm.trim();
+    });
   }
 
   return strictDistractors;
