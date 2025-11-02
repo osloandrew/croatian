@@ -999,7 +999,7 @@ function renderClozeGameUI(
           break;
         }
       }
-      if (firstCroatian !== "[Mangler norsk setning]") break;
+      if (firstCroatian !== "[Croatian Sentence Not Found]") break;
     }
   }
 
