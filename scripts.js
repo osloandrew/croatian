@@ -3068,32 +3068,3 @@ document.addEventListener("click", (event) => {
     });
   }
 });
-
-document.addEventListener("DOMContentLoaded", () => {
-  const waitForGoogle = setInterval(() => {
-    if (!window.google || !google.accounts?.id) return;
-
-    clearInterval(waitForGoogle);
-
-    google.accounts.id.initialize({
-      client_id:
-        "602620603995-va2p718uonqohe3u67i7q4g4huatir82.apps.googleusercontent.com",
-      callback: (response) =>
-        console.log("✅ Google credential:", response.credential),
-    });
-
-    const target = document.getElementById("g_id_signin");
-    if (target) {
-      google.accounts.id.renderButton(target, {
-        theme: "outline",
-        size: "large",
-        text: "signin_with",
-      });
-      console.log("✅ Button rendered into", target);
-    } else {
-      console.error("❌ #g_id_signin not found in DOM");
-    }
-
-    google.accounts.id.prompt();
-  }, 200);
-});
