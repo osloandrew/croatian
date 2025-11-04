@@ -559,6 +559,51 @@
         });
       });
     </script>
+    <script type="module">
+      import { createClient } from "https://esm.sh/@supabase/supabase-js";
+
+      const SUPABASE_URL = "https://gjaddakhfrfrsknawgjc.supabase.co";
+      const SUPABASE_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdqYWRkYWtoZnJmcnNrbmF3Z2pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyNjk3MjgsImV4cCI6MjA3Nzg0NTcyOH0.H4hqrHHomnY3NS5DdT4PaQ-mzfT9jjF9hths1eO_mDo";
+      const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      // --- Sign in/out buttons ---
+      window.signIn = async () => {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+        });
+        if (error) console.error(error);
+      };
+
+      window.signOut = async () => {
+        await supabase.auth.signOut();
+        console.log("Signed out");
+      };
+
+      // --- Example of recording a word ---
+      window.recordWord = async (word, isCorrect) => {
+        const { data } = await supabase.auth.getUser();
+        const user = data.user;
+        if (!user) return; // user not logged in
+
+        const update = {
+          user_id: user.id,
+          word,
+          last_seen: new Date().toISOString(),
+          correct_count: isCorrect ? 1 : 0,
+          incorrect_count: isCorrect ? 0 : 1,
+        };
+
+        const { error } = await supabase
+          .from("word_mastery")
+          .upsert(update, { onConflict: "user_id,word" });
+
+        if (error) console.error("Supabase error:", error);
+      };
+    </script>
+
+    <button onclick="signIn()">Sign in with Google</button>
+    <button onclick="signOut()">Sign out</button>
     <script src="noRandom.js" defer></script>
     <script src="scripts.js" defer></script>
     <script src="wordGame.js" defer></script>
