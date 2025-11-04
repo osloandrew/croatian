@@ -391,7 +391,11 @@ async function startWordGame() {
           const fallbackPool = results
             .map((r) => r.ord.split(",")[0].trim().toLowerCase())
             .filter(
-              (w) => w && w !== formattedClozed && !uniqueWords.includes(w)
+              (w) =>
+                w &&
+                w !== formattedClozed &&
+                !uniqueWords.includes(w) &&
+                !noRandom.includes(w)
             );
 
           while (uniqueWords.length < 4 && fallbackPool.length > 0) {
@@ -632,7 +636,13 @@ async function startWordGame() {
     if (uniqueWords.length < 4) {
       const fallbackPool = results
         .map((r) => r.ord.split(",")[0].trim().toLowerCase())
-        .filter((w) => w && w !== formattedClozed && !uniqueWords.includes(w));
+        .filter(
+          (w) =>
+            w &&
+            w !== formattedClozed &&
+            !uniqueWords.includes(w) &&
+            !noRandom.includes(w)
+        );
 
       while (uniqueWords.length < 4 && fallbackPool.length > 0) {
         const candidate =
@@ -2808,6 +2818,7 @@ function generateClozeDistractors(baseWord, clozedForm, CEFR, gender) {
   const baseCandidates = results.filter((r) => {
     const g = (r.gender || "").toLowerCase();
     if (!g.startsWith(pos)) return false;
+    if (noRandom.includes(r.ord.toLowerCase())) return false; // ← add this
     let ord = r.ord.split(",")[0].trim().toLowerCase();
     if (r.gender.startsWith("expression") && r.ord.includes(" ")) {
       ord = r.ord.trim().toLowerCase();
