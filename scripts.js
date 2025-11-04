@@ -3068,3 +3068,11 @@ document.addEventListener("click", (event) => {
     });
   }
 });
+      console.log("✅ Button rendered into", target);
+    } else {
+      console.error("❌ #g_id_signin not found in DOM");
+    }
+
+    google.accounts.id.prompt();
+  }, 200);
+});
