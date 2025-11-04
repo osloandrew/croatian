@@ -790,47 +790,45 @@ function displayPronunciation(word) {
   }
 }
 
-function buildCEFRLabel(level) {
-  const classMap = {
-    A1: "easy",
-    A2: "easy",
-    B1: "medium",
-    B2: "medium",
-    C: "hard",
-  };
-  const cls = classMap[level] || "unknown";
-  return `<div class="game-cefr-label ${cls}">${level}</div>`;
-}
-
-function shortGenderLabel(gender = "") {
-  const map = {
-    noun: "Noun",
-    masculine: "N - Masc",
-    feminine: "N - Fem",
-    neuter: "N - Neut",
-    adjective: "Adj",
-    adverb: "Adv",
-    conjunction: "Conj",
-    determiner: "Det",
-    expression: "Exp",
-    interjection: "Inter",
-    numeral: "Num",
-    particle: "Part",
-    possessive: "Poss",
-    preposition: "Prep",
-    pronoun: "Pron",
-  };
-  const key = Object.keys(map).find((k) => gender.startsWith(k));
-  return map[key] || gender;
-}
-
 function renderWordGameUI(wordObj, translations, isReintroduced = false) {
   // Add the word object to the data store and get its index
   const wordId = wordDataStore.push(wordObj) - 1;
 
   // Split the word at the comma and use the first part
   let displayedWord = wordObj.ord.split(",")[0].trim();
-  let displayedGender = shortGenderLabel(wordObj.gender);
+  let displayedGender = wordObj.gender;
+
+  if (wordObj.gender.startsWith("noun")) {
+    displayedGender = "Noun";
+  } else if (wordObj.gender.startsWith("masculine")) {
+    displayedGender = "N - Masc";
+  } else if (wordObj.gender.startsWith("feminine")) {
+    displayedGender = "N - Fem";
+  } else if (wordObj.gender.startsWith("neuter")) {
+    displayedGender = "N - Neut";
+  } else if (wordObj.gender.startsWith("adjective")) {
+    displayedGender = "Adj";
+  } else if (wordObj.gender.startsWith("adverb")) {
+    displayedGender = "Adv";
+  } else if (wordObj.gender.startsWith("conjunction")) {
+    displayedGender = "Conj";
+  } else if (wordObj.gender.startsWith("determiner")) {
+    displayedGender = "Det";
+  } else if (wordObj.gender.startsWith("expression")) {
+    displayedGender = "Exp";
+  } else if (wordObj.gender.startsWith("interjection")) {
+    displayedGender = "Inter";
+  } else if (wordObj.gender.startsWith("numeral")) {
+    displayedGender = "Num";
+  } else if (wordObj.gender.startsWith("particle")) {
+    displayedGender = "Part";
+  } else if (wordObj.gender.startsWith("possessive")) {
+    displayedGender = "Poss";
+  } else if (wordObj.gender.startsWith("preposition")) {
+    displayedGender = "Prep";
+  } else if (wordObj.gender.startsWith("pronoun")) {
+    displayedGender = "Pron";
+  }
 
   // Check if CEFR is selected; if not, add a label based on wordObj.CEFR
   let cefrLabel = "";
@@ -840,7 +838,20 @@ function renderWordGameUI(wordObj, translations, isReintroduced = false) {
     ? '<div class="game-tricky-word visible"><i class="fa fa-repeat" aria-hidden="true"></i></div>'
     : '<div class="game-tricky-word" style="visibility: hidden;"><i class="fa fa-repeat" aria-hidden="true"></i></div>';
 
-  cefrLabel = buildCEFRLabel(wordObj.CEFR);
+  // Always show the CEFR label if CEFR is available
+  if (wordObj.CEFR === "A1") {
+    cefrLabel = '<div class="game-cefr-label easy">A1</div>';
+  } else if (wordObj.CEFR === "A2") {
+    cefrLabel = '<div class="game-cefr-label easy">A2</div>';
+  } else if (wordObj.CEFR === "B1") {
+    cefrLabel = '<div class="game-cefr-label medium">B1</div>';
+  } else if (wordObj.CEFR === "B2") {
+    cefrLabel = '<div class="game-cefr-label medium">B2</div>';
+  } else if (wordObj.CEFR === "C") {
+    cefrLabel = '<div class="game-cefr-label hard">C</div>';
+  } else {
+    console.warn("CEFR value is missing for this word:", wordObj);
+  }
 
   // Create placeholder for banners (this will be dynamically updated when banners are shown)
   let bannerPlaceholder = '<div id="game-banner-placeholder"></div>';
@@ -921,7 +932,18 @@ function renderClozeGameUI(
 ) {
   const blank = "___";
   const wordId = wordDataStore.push(wordObj) - 1;
-  let cefrLabel = buildCEFRLabel(wordObj.CEFR);
+  let cefrLabel = "";
+  if (wordObj.CEFR === "A1") {
+    cefrLabel = '<div class="game-cefr-label easy">A1</div>';
+  } else if (wordObj.CEFR === "A2") {
+    cefrLabel = '<div class="game-cefr-label easy">A2</div>';
+  } else if (wordObj.CEFR === "B1") {
+    cefrLabel = '<div class="game-cefr-label medium">B1</div>';
+  } else if (wordObj.CEFR === "B2") {
+    cefrLabel = '<div class="game-cefr-label medium">B2</div>';
+  } else if (wordObj.CEFR === "C") {
+    cefrLabel = '<div class="game-cefr-label hard">C</div>';
+  }
   let baseWord = wordObj.ord.split(",")[0].trim().toLowerCase(); // keep this
   if (wordObj.gender.startsWith("expression") && baseWord.includes(" ")) {
     // preserve the full expression (e.g., "dogoditi se")
@@ -1264,9 +1286,35 @@ function renderClozeGameUI(
     <div class="game-word-card">
       <div class="game-labels-container">
         <div class="game-label-subgroup">
-      <div class="game-gender">${shortGenderLabel(
-        wordObj.gender
-      )}</div>          ${cefrLabel}
+      <div class="game-gender">${
+        wordObj.gender.startsWith("masculine")
+          ? "N - Masc"
+          : wordObj.gender.startsWith("feminine")
+          ? "N - Fem"
+          : wordObj.gender.startsWith("neuter")
+          ? "N - Neut"
+          : wordObj.gender.startsWith("adjective")
+          ? "Adj"
+          : wordObj.gender.startsWith("adverb")
+          ? "Adv"
+          : wordObj.gender.startsWith("conjunction")
+          ? "Conj"
+          : wordObj.gender.startsWith("determiner")
+          ? "Det"
+          : wordObj.gender.startsWith("expression")
+          ? "Exp"
+          : wordObj.gender.startsWith("interjection")
+          ? "Inter"
+          : wordObj.gender.startsWith("numeral")
+          ? "Num"
+          : wordObj.gender.startsWith("possessive")
+          ? "Poss"
+          : wordObj.gender.startsWith("preposition")
+          ? "Prep"
+          : wordObj.gender.startsWith("pronoun")
+          ? "Pron"
+          : wordObj.gender
+      }</div>          ${cefrLabel}
         </div>
         <div id="game-banner-placeholder"></div>
         <div class="game-label-subgroup">
