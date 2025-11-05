@@ -11,6 +11,10 @@ let levelTotalQuestions = 0;
 let gameActive = false;
 let incorrectCount = 0; // Tracks the total number of incorrect answers
 let incorrectWordQueue = []; // Queue for storing incorrect words with counters
+// --- Repair Mode (auto): enter at 8 unresolved, exit at 4 ---
+let repairMode = false;
+const REPAIR_ENTER = 8;
+const REPAIR_EXIT = 4;
 const levelThresholds = {
   A1: { up: 0.85, down: null }, // Starting level — can't go lower
   A2: { up: 0.9, down: 0.6 },
@@ -41,6 +45,8 @@ const banners = {
   fallback: "game-fallback-banner",
   streak: "game-streak-banner", // New banner for 10-word streak
   clearedPracticeWords: "game-cleared-practice-banner", // New banner for clearing reintroduced words
+  enterRepair: "game-repair-enter-banner",
+  exitRepair: "game-repair-exit-banner",
 };
 
 const clearedPracticeMessages = [
@@ -100,6 +106,22 @@ const streakMessages = [
   "🧠 Brainpower unleashed! {X} correct answers consecutively!",
 ];
 
+const enterRepairMessages = [
+  "🧩 Repair Mode activated — focusing on your toughest words!",
+  "⚙️ Time to polish those tricky items!",
+  "🔧 Repair Mode on — let's lock in what you’ve learned.",
+  "🧠 Deep focus: tackling your hard words now.",
+  "🪛 Repair Mode engaged — sharpen your weakest links!",
+];
+
+const exitRepairMessages = [
+  "✅ Repair Mode complete — back to new words!",
+  "🎯 You’ve stabilized those tough ones — onward!",
+  "🚀 All set! Exiting Repair Mode with stronger recall.",
+  "🌟 Great work — fresh words unlocked again!",
+  "🏁 Repair cycle finished — let’s keep progressing!",
+];
+
 function showBanner(type, level) {
   const bannerPlaceholder = document.getElementById("game-banner-placeholder");
   let bannerHTML = "";
@@ -133,8 +155,15 @@ function showBanner(type, level) {
     const randomIndex = Math.floor(Math.random() * messages.length);
     message = messages[randomIndex];
     bannerHTML = `<div class="game-lock-banner"><p>${message}</p></div>`;
+  } else if (type === "enterRepair") {
+    const randomIndex = Math.floor(Math.random() * enterRepairMessages.length);
+    message = enterRepairMessages[randomIndex];
+    bannerHTML = `<div class="game-repair-enter-banner"><p>${message}</p></div>`;
+  } else if (type === "exitRepair") {
+    const randomIndex = Math.floor(Math.random() * exitRepairMessages.length);
+    message = exitRepairMessages[randomIndex];
+    bannerHTML = `<div class="game-repair-exit-banner"><p>${message}</p></div>`;
   }
-
   bannerPlaceholder.innerHTML = bannerHTML;
 }
 
@@ -297,7 +326,12 @@ async function startWordGame() {
   gameActive = true;
   showLandingCard(false);
   hideAllBanners(); // Hide banners before starting the new word
-
+  // --- Auto toggle Repair Mode based on backlog size ---
+  if (!repairMode && incorrectWordQueue.length >= REPAIR_ENTER) {
+    enterRepairMode();
+  } else if (repairMode && incorrectWordQueue.length <= REPAIR_EXIT) {
+    exitRepairMode();
+  }
   searchBarWrapper.style.display = "none"; // Hide search-bar-wrapper
   randomBtn.style.display = "none"; // Hide random button
 
@@ -328,31 +362,17 @@ async function startWordGame() {
     correctlyAnsweredWords = []; // Reset the array
   }
 
-  // First, check if there is an incorrect word to reintroduce
-  if (
-    incorrectWordQueue.length > 0 &&
-    wordsSinceLastIncorrect >= reintroduceThreshold
-  ) {
-    const firstWordInQueue = incorrectWordQueue[0];
-    if (firstWordInQueue.counter >= 10) {
-      // Play the popChime when reintroducing an incorrect word
-      popChime.currentTime = 0; // Reset audio to the beginning
-      popChime.play(); // Play the pop sound
-
-      console.log(
-        "Reintroducing word from incorrectWordQueue:",
-        firstWordInQueue.wordObj
-      );
-
-      // Reintroduce the word
+  // --- Reintro logic (normal vs. Repair Mode) ---
+  // In Repair Mode: always pull from the queue immediately (no counters/thresholds).
+  // Outside Repair Mode: keep your original "after N words" and counter>=10 behavior.
+  if (incorrectWordQueue.length > 0) {
+    if (repairMode) {
+      // Rotate queue so we cycle through all wrong words
+      const firstWordInQueue = incorrectWordQueue.shift();
+      incorrectWordQueue.push(firstWordInQueue);
+      // Render exactly as you already do, but skip the counter/threshold gate & pop sound
       currentWord = firstWordInQueue.wordObj.ord;
       correctTranslation = firstWordInQueue.wordObj.engelsk;
-
-      // Log wordObj being passed to renderWordGameUI
-      console.log(
-        "Passing wordObj to renderWordGameUI:",
-        firstWordInQueue.wordObj
-      );
 
       if (firstWordInQueue.wasCloze) {
         const randomWordObj = firstWordInQueue.wordObj;
@@ -369,7 +389,6 @@ async function startWordGame() {
 
         let clozedForm = firstWordInQueue.clozedForm;
         const formattedClozed = clozedForm.toLowerCase();
-
         const distractors = generateClozeDistractors(
           baseWord,
           clozedForm,
@@ -385,8 +404,6 @@ async function startWordGame() {
             (word) => word.charAt(0).toUpperCase() + word.slice(1)
           );
         }
-
-        // ✅ Guarantee 4 options in REINTRODUCED CLOZE mode
         if (uniqueWords.length < 4) {
           const fallbackPool = results
             .map((r) => r.ord.split(",")[0].trim().toLowerCase())
@@ -397,25 +414,20 @@ async function startWordGame() {
                 !uniqueWords.includes(w) &&
                 !noRandom.includes(w)
             );
-
           while (uniqueWords.length < 4 && fallbackPool.length > 0) {
             const candidate =
               fallbackPool[Math.floor(Math.random() * fallbackPool.length)];
-            if (!uniqueWords.includes(candidate)) {
-              uniqueWords.push(candidate);
-            }
+            if (!uniqueWords.includes(candidate)) uniqueWords.push(candidate);
           }
         }
-
         renderClozeGameUI(randomWordObj, uniqueWords, clozedForm, true);
       } else {
-        // Rebuild incorrect translations for non-cloze word
+        // non-cloze reintro (same as your existing path)
         let incorrectTranslations = fetchIncorrectTranslations(
           firstWordInQueue.wordObj.gender,
           correctTranslation,
           firstWordInQueue.wordObj.CEFR
         );
-
         if (incorrectTranslations.length < 3) {
           const additionalTranslations =
             fetchIncorrectTranslationsFromOtherCEFRLevels(
@@ -426,15 +438,12 @@ async function startWordGame() {
             additionalTranslations
           );
         }
-
         const allTranslations = shuffleArray([
           correctTranslation,
           ...incorrectTranslations,
         ]);
-
         const uniqueDisplayedTranslations =
           ensureUniqueDisplayedValues(allTranslations);
-
         renderWordGameUI(
           firstWordInQueue.wordObj,
           uniqueDisplayedTranslations,
@@ -442,18 +451,113 @@ async function startWordGame() {
         );
       }
 
-      // Do not remove the word from the queue yet. It will be removed when answered correctly.
-      firstWordInQueue.shown = true; // Mark that this word has been shown again
-
-      // Reset counter for new words shown
-      wordsSinceLastIncorrect = 0;
-
-      // Render the updated stats box
+      firstWordInQueue.shown = true;
+      // Do NOT advance wordsSinceLastIncorrect in Repair Mode
       renderStats();
       return;
-    } else {
-      // Increment the counter for this word
-      incorrectWordQueue.forEach((word) => word.counter++);
+    } else if (wordsSinceLastIncorrect >= reintroduceThreshold) {
+      // --- original non-repair behavior preserved ---
+      const firstWordInQueue = incorrectWordQueue[0];
+      if (firstWordInQueue.counter >= 10) {
+        popChime.currentTime = 0;
+        popChime.play();
+
+        currentWord = firstWordInQueue.wordObj.ord;
+        correctTranslation = firstWordInQueue.wordObj.engelsk;
+
+        if (firstWordInQueue.wasCloze) {
+          const randomWordObj = firstWordInQueue.wordObj;
+          const baseWord = randomWordObj.ord.split(",")[0].trim().toLowerCase();
+          const matchingEntry = results.find(
+            (r) =>
+              r.ord.toLowerCase() === randomWordObj.ord.toLowerCase() &&
+              r.gender === randomWordObj.gender &&
+              r.CEFR === randomWordObj.CEFR
+          );
+          const exampleText = matchingEntry?.eksempel || "";
+          const firstSentence = exampleText.split(/(?<=[.!?])\s+/)[0];
+          const tokens = firstSentence.match(/\p{L}+/gu) || [];
+
+          let clozedForm = firstWordInQueue.clozedForm;
+          const formattedClozed = clozedForm.toLowerCase();
+
+          const distractors = generateClozeDistractors(
+            baseWord,
+            clozedForm,
+            randomWordObj.CEFR,
+            randomWordObj.gender
+          );
+
+          let allWords = shuffleArray([formattedClozed, ...distractors]);
+          let uniqueWords = ensureUniqueDisplayedValues(allWords);
+
+          if (/^\p{Lu}/u.test(clozedForm)) {
+            uniqueWords = uniqueWords.map(
+              (word) => word.charAt(0).toUpperCase() + word.slice(1)
+            );
+          }
+          if (uniqueWords.length < 4) {
+            const fallbackPool = results
+              .map((r) => r.ord.split(",")[0].trim().toLowerCase())
+              .filter(
+                (w) =>
+                  w &&
+                  w !== formattedClozed &&
+                  !uniqueWords.includes(w) &&
+                  !noRandom.includes(w)
+              );
+
+            while (uniqueWords.length < 4 && fallbackPool.length > 0) {
+              const candidate =
+                fallbackPool[Math.floor(Math.random() * fallbackPool.length)];
+              if (!uniqueWords.includes(candidate)) uniqueWords.push(candidate);
+            }
+          }
+          renderClozeGameUI(
+            firstWordInQueue.wordObj,
+            uniqueWords,
+            clozedForm,
+            true
+          );
+        } else {
+          let incorrectTranslations = fetchIncorrectTranslations(
+            firstWordInQueue.wordObj.gender,
+            correctTranslation,
+            firstWordInQueue.wordObj.CEFR
+          );
+
+          if (incorrectTranslations.length < 3) {
+            const additionalTranslations =
+              fetchIncorrectTranslationsFromOtherCEFRLevels(
+                firstWordInQueue.wordObj.gender,
+                correctTranslation
+              );
+            incorrectTranslations = incorrectTranslations.concat(
+              additionalTranslations
+            );
+          }
+
+          const allTranslations = shuffleArray([
+            correctTranslation,
+            ...incorrectTranslations,
+          ]);
+          const uniqueDisplayedTranslations =
+            ensureUniqueDisplayedValues(allTranslations);
+
+          renderWordGameUI(
+            firstWordInQueue.wordObj,
+            uniqueDisplayedTranslations,
+            true
+          );
+        }
+
+        firstWordInQueue.shown = true;
+        wordsSinceLastIncorrect = 0;
+        renderStats();
+        return;
+      } else {
+        incorrectWordQueue.forEach((word) => word.counter++);
+      }
     }
   }
 
@@ -1394,13 +1498,17 @@ async function handleTranslationClick(
       }
     }
 
-    // If the word was in the review queue and the user answered it correctly, remove it
     const indexInQueue = incorrectWordQueue.findIndex(
       (incorrectWord) =>
         incorrectWord.wordObj.ord === wordObj.ord && incorrectWord.shown
     );
     if (indexInQueue !== -1) {
-      incorrectWordQueue.splice(indexInQueue, 1); // Remove from review queue once answered correctly
+      incorrectWordQueue.splice(indexInQueue, 1);
+
+      // --- Auto-exit rule: drop Repair Mode when backlog is down to 4 ---
+      if (repairMode && incorrectWordQueue.length <= REPAIR_EXIT) {
+        exitRepairMode();
+      }
     }
     // Trigger the streak banner if the user reaches a streak
     if (correctStreak % 10 === 0) {
@@ -1464,6 +1572,10 @@ async function handleTranslationClick(
         wasCloze: isCloze,
         clozedForm: correctTranslation, // << STORE the clozed form separately!
       });
+      // --- trigger Repair Mode immediately on 8th wrong word ---
+      if (!repairMode && incorrectWordQueue.length >= REPAIR_ENTER) {
+        enterRepairMode();
+      }
     }
   }
 
@@ -1724,6 +1836,22 @@ function toggleLevelLock() {
     icon.title = levelLocked ? "Level is locked" : "Level is unlocked";
   }
   showBanner("levelLock", levelLocked ? "locked" : "unlocked");
+}
+
+function enterRepairMode() {
+  if (repairMode) return;
+  repairMode = true;
+  const btn = document.getElementById("game-next-word-button");
+  if (btn) btn.textContent = "Next Review";
+  showBanner("enterRepair");
+}
+
+function exitRepairMode() {
+  if (!repairMode) return;
+  repairMode = false;
+  const btn = document.getElementById("game-next-word-button");
+  if (btn) btn.textContent = "Next Word";
+  showBanner("exitRepair");
 }
 
 // Check if the user can level up or fall back
