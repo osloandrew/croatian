@@ -1944,7 +1944,7 @@ function renderListeningGameUI(wordObj, translations, isReintroduced = false) {
 
 <div class="game-word" style="display:flex;justify-content:center;align-items:center;min-height:80px;">
   <div id="listening-audio-button" class="audio-button" style="cursor:pointer;display:block;">
-    <img src="/Resources/Photos/pronunciation.svg"
+    <img src="Resources/Photos/pronunciation.svg"
          alt="Play pronunciation"
          style="width:64px;height:64px;filter:invert(0);transition:transform 0.1s ease;" />
   </div>
