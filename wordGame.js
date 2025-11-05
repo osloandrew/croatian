@@ -468,7 +468,8 @@ async function startWordGame() {
           ensureUniqueDisplayedValues(allTranslations);
         renderListeningGameUI(
           firstWordInQueue.wordObj,
-          uniqueDisplayedTranslations
+          uniqueDisplayedTranslations,
+          true
         );
       } else {
         // non-cloze reintro (same as your existing path)
@@ -592,7 +593,8 @@ async function startWordGame() {
             ensureUniqueDisplayedValues(allTranslations);
           renderListeningGameUI(
             firstWordInQueue.wordObj,
-            uniqueDisplayedTranslations
+            uniqueDisplayedTranslations,
+            true
           );
         } else {
           let incorrectTranslations = fetchIncorrectTranslations(
@@ -851,7 +853,7 @@ async function startWordGame() {
 
     renderClozeGameUI(randomWordObj, uniqueWords, formattedClozed, false);
   } else if (questionType === "listening") {
-    renderListeningGameUI(randomWordObj, uniqueDisplayedTranslations);
+    renderListeningGameUI(randomWordObj, uniqueDisplayedTranslations, false);
   } else {
     renderWordGameUI(randomWordObj, uniqueDisplayedTranslations, false);
   }
@@ -1746,6 +1748,20 @@ async function handleListeningAnswer(selectedTranslation, wordObj) {
     correctStreak++;
     updateRecentAnswers(true);
     correctlyAnsweredWords.push(wordObj.ord);
+
+    // ✅ Outside repair mode — remove if it was reintroduced
+    const indexInQueue = incorrectWordQueue.findIndex(
+      (incorrectWord) =>
+        incorrectWord.wordObj.ord === wordObj.ord && incorrectWord.shown
+    );
+    if (indexInQueue !== -1) {
+      incorrectWordQueue.splice(indexInQueue, 1);
+
+      // --- Auto-exit rule: drop Repair Mode when backlog is down to 4 ---
+      if (repairMode && incorrectWordQueue.length <= REPAIR_EXIT) {
+        exitRepairMode();
+      }
+    }
   } else {
     badChime.currentTime = 0;
     badChime.play();
@@ -1902,11 +1918,14 @@ async function fetchExampleSentence(wordObj) {
   return { exampleSentence, sentenceTranslation };
 }
 
-function renderListeningGameUI(wordObj, translations) {
+function renderListeningGameUI(wordObj, translations, isReintroduced = false) {
   const wordId = wordDataStore.push(wordObj) - 1;
 
   const cefrLabel = buildCEFRLabel(wordObj.CEFR);
   const displayedGender = shortGenderLabel(wordObj.gender);
+  const secondTrickyLabel = isReintroduced
+    ? '<div class="game-tricky-word visible"><i class="fa fa-repeat" aria-hidden="true"></i></div>'
+    : '<div class="game-tricky-word" style="visibility:hidden;"><i class="fa fa-repeat" aria-hidden="true"></i></div>';
 
   gameContainer.innerHTML = `
     <div class="game-stats-content" id="game-session-stats"></div>
@@ -1918,11 +1937,9 @@ function renderListeningGameUI(wordObj, translations) {
           ${cefrLabel}
         </div>
         <div id="game-banner-placeholder"></div>
-        <div class="game-label-subgroup">
-          <div class="game-tricky-word" style="visibility:hidden;">
-            <i class="fa fa-repeat" aria-hidden="true"></i>
-          </div>
-        </div>
+      <div class="game-label-subgroup">
+        ${secondTrickyLabel}
+      </div>
       </div>
 
 <div class="game-word" style="display:flex;justify-content:center;align-items:center;min-height:80px;">
