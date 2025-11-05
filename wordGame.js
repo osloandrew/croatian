@@ -1,3 +1,18 @@
+/* ─────────────────────────────────────────────────────────────
+   WORD GAME — single-file layout
+   Editing rule: comment-only refactors first; no behavior changes.
+   Sections:
+     1) Globals & State
+     2) DOM Refs
+     3) UI Messages & Constants
+     4) Banner Helpers
+     5) UI Builders (labels/cards/cloze)
+     6) Event Handlers
+     7) Game Flow
+     8) Data & Selection Logic
+   ──────────────────────────────────────────────────────────── */
+
+// ───────────────── 1) Globals & State ─────────────────
 let activeAudio = [];
 let currentWord;
 let correctTranslation;
@@ -36,8 +51,12 @@ let popChime = new Audio("Resources/Audio/popChime.wav");
 goodChime.volume = 0.2;
 badChime.volume = 0.2;
 
+// ───────────────── 2) DOM Refs ─────────────────
+
 const gameContainer = document.getElementById("results-container"); // Assume this is where you'll display the game
 const statsContainer = document.getElementById("game-session-stats"); // New container for session stats
+
+// ───────────────── 3) UI Messages & Constants ─────────────────
 
 // Centralized banner handler
 const banners = {
@@ -121,6 +140,8 @@ const exitRepairMessages = [
   "🌟 Great work — fresh words unlocked again!",
   "🏁 Repair cycle finished — let’s keep progressing!",
 ];
+
+// ───────────────── 4) Banner Helpers ─────────────────
 
 function showBanner(type, level) {
   const bannerPlaceholder = document.getElementById("game-banner-placeholder");
@@ -301,6 +322,8 @@ function renderStats() {
   if (streakEl) streakEl.textContent = correctStreak;
   if (reviewEl) reviewEl.textContent = wordsToReview;
 }
+
+// ───────────────── 7) Game Flow ─────────────────
 
 async function startWordGame() {
   document.getElementById("lock-icon").style.display = "inline";
@@ -894,6 +917,8 @@ function displayPronunciation(word) {
   }
 }
 
+// ───────────────── 5) UI Builders ─────────────────
+
 function buildCEFRLabel(level) {
   const classMap = {
     A1: "easy",
@@ -1429,6 +1454,8 @@ function renderClozeGameUI(
   renderStats(); // Ensure stats bar is present after cloze loads too
 }
 
+// ───────────────── 6) Event Handlers ─────────────────
+
 async function handleTranslationClick(
   selectedTranslation,
   wordObj,
@@ -1705,6 +1732,8 @@ async function fetchExampleSentence(wordObj) {
   const sentenceTranslation = translations[randomIndex] || ""; // Provide an empty string if translation is unavailable
   return { exampleSentence, sentenceTranslation };
 }
+
+// ───────────────── 8) Data & Selection Logic ─────────────────
 
 async function fetchRandomWord() {
   const selectedPOS = document.getElementById("pos-select")
