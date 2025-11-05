@@ -508,47 +508,107 @@ async function randomWord() {
   hideSpinner(); // Hide the spinner
 }
 
-// Function to generate potential inexact matches by removing plural endings, etc.
+// Comprehensive Croatian inexact-match generator
 function generateInexactMatches(query) {
-  const variations = [query.toLowerCase().trim()]; // Always include the base query
+  const q = query.toLowerCase().trim();
+  const variations = new Set([q]);
 
-  // Handle common suffixes like 'ing', 'ed', etc.
+  // --- 1. Inflectional suffixes (nouns, adjectives, verbs) ---
   const suffixes = [
-    "a", // nom sg fem, gen sg neuter, etc.
-    "e", // gen sg fem, nom/acc pl fem
-    "i", // dat sg fem, nom pl masc
-    "u", // acc sg masc/neut, loc sg
-    "o", // nom sg neuter
-    "om", // dat/loc/inst sg masc/neut
-    "em", // dat/loc sg masc soft stem
-    "ama", // dat/loc/inst pl fem
-    "ima", // dat/loc/inst pl masc/neut
-    "ovi", // nom pl masc
-    "eve", // alt masc pl
-    "ovima", // dat/loc/inst pl masc
-    "ih", // gen pl
-    "ju", // 3pl pres, acc sg fem
-    "ao",
-    "eo",
-    "io", // past masc sg common verb stems
+    // singular noun/adjective endings
+    "a",
+    "e",
+    "i",
+    "o",
+    "u",
+    "om",
+    "em",
+    "u",
+    "om",
+    "omu",
+    "oga",
+    "ega",
+    // plural endings
+    "ama",
+    "ima",
+    "ovima",
+    "evima",
+    "ovima",
+    "ima",
+    "ovi",
+    "evi",
+    "i",
+    "e",
+    // genitive/locative endings
+    "ih",
+    "ama",
+    "ima",
+    "ima",
+    "ima",
+    "ama",
+    "ima",
+    // verb person/tense endings
+    "m",
+    "š",
+    "mo",
+    "te",
+    "ju",
+    "ći",
     "la",
     "lo",
     "li",
-    "le", // past fem/neut/pl
-    "š",
-    "m", // 1sg/2sg present
-    "mo",
-    "te", // 1pl/2pl present
-  ]; // Alphabetized
-  suffixes.forEach((suffix) => {
-    if (query.endsWith(suffix)) {
-      variations.push(query.slice(0, -suffix.length));
+    "le",
+    "o",
+    "ao",
+    "eo",
+    "io",
+  ];
+  suffixes.forEach((suf) => {
+    if (q.endsWith(suf) && q.length > suf.length + 2) {
+      variations.add(q.slice(0, -suf.length));
     }
   });
 
-  return variations;
-}
+  // --- 2. Derivational adjective alternations ---
+  // Map of frequent adjectival endings → stem alternations
+  const alternations = [
+    // --- Adjective/adverb alternations ---
+    { from: "nih", to: "an" }, // spolnih → spolan, glavnih → glavan
+    { from: "ni", to: "an" }, // spolni → spolan
+    { from: "ni", to: "en" }, // javni → javen
+    { from: "no", to: "an" }, // sustavno → sustavan, glasno → glasan
+    { from: "no", to: "en" }, // mirno → miren
+    { from: "no", to: "in" }, // tiho → tih / tišin- (approximates)
+    // --- Other derivational adjective endings ---
+    { from: "ski", to: "ak" }, // ljudski → ljudak
+    { from: "ski", to: "an" }, // morski → moran
+    { from: "ški", to: "aš" }, // bošnjački → bošnjak
+    { from: "čki", to: "ak" }, // dječački → dječak
+    { from: "asti", to: "ast" }, // robustni → robustan
+    // --- Verb stems ---
+    { from: "ati", to: "" }, // raditi → rad
+    { from: "jeti", to: "je" }, // htjeti → htje
+    { from: "ći", to: "" }, // ići → i
+    { from: "oga", to: "" }, // genitive adjectives (novoga → nov)
+  ];
+  alternations.forEach(({ from, to }) => {
+    if (q.endsWith(from) && q.length > from.length + 2) {
+      variations.add(q.slice(0, -from.length) + to);
+    }
+  });
 
+  // --- 3. Final vowel normalization (broad recall) ---
+  // Handles cases like "spoln" → "spolan", "glavn" → "glavan"
+  const withFinal = Array.from(variations);
+  withFinal.forEach((base) => {
+    if (base.endsWith("n")) variations.add(base + "an");
+    if (base.endsWith("r")) variations.add(base + "ar");
+    if (base.endsWith("v")) variations.add(base + "an");
+  });
+
+  // --- 4. Deduplication and return ---
+  return Array.from(variations);
+}
 // Perform a search based on the input query and selected POS
 async function search(queryOverride = null) {
   const originalQuery =
