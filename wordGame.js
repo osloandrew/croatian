@@ -1779,6 +1779,9 @@ async function handleListeningAnswer(selectedTranslation, wordObj) {
     correctStreak = 0;
     updateRecentAnswers(false);
 
+    totalQuestions++;
+    questionsAtCurrentLevel++;
+
     const inQueue = incorrectWordQueue.some(
       (q) => q.wordObj.ord === wordObj.ord
     );
