@@ -149,40 +149,29 @@ function showBanner(type, level) {
   let message = "";
 
   if (type === "congratulations") {
-    const randomIndex = Math.floor(
-      Math.random() * congratulationsMessages.length
-    );
-    message = congratulationsMessages[randomIndex].replace("{X}", level);
+    message = pickRandom(congratulationsMessages)?.replace("{X}", level);
     bannerHTML = `<div class="game-congratulations-banner"><p>${message}</p></div>`;
   } else if (type === "fallback") {
-    const randomIndex = Math.floor(Math.random() * fallbackMessages.length);
-    message = fallbackMessages[randomIndex].replace("{X}", level);
+    message = pickRandom(fallbackMessages)?.replace("{X}", level);
     bannerHTML = `<div class="game-fallback-banner"><p>${message}</p></div>`;
   } else if (type === "streak") {
-    const randomIndex = Math.floor(Math.random() * streakMessages.length);
-    message = streakMessages[randomIndex].replace("{X}", level);
+    message = pickRandom(streakMessages)?.replace("{X}", level);
     bannerHTML = `<div class="game-streak-banner"><p>${message}</p></div>`;
   } else if (type === "clearedPracticeWords") {
-    const randomIndex = Math.floor(
-      Math.random() * clearedPracticeMessages.length
-    );
-    message = clearedPracticeMessages[randomIndex];
+    message = pickRandom(clearedPracticeMessages);
     bannerHTML = `<div class="game-cleared-practice-banner"><p>${message}</p></div>`;
   } else if (type === "levelLock") {
     const messages =
       level === "locked"
         ? lockToggleMessages.locked
         : lockToggleMessages.unlocked;
-    const randomIndex = Math.floor(Math.random() * messages.length);
-    message = messages[randomIndex];
+    message = pickRandom(messages);
     bannerHTML = `<div class="game-lock-banner"><p>${message}</p></div>`;
   } else if (type === "enterRepair") {
-    const randomIndex = Math.floor(Math.random() * enterRepairMessages.length);
-    message = enterRepairMessages[randomIndex];
+    message = pickRandom(enterRepairMessages);
     bannerHTML = `<div class="game-repair-enter-banner"><p>${message}</p></div>`;
   } else if (type === "exitRepair") {
-    const randomIndex = Math.floor(Math.random() * exitRepairMessages.length);
-    message = exitRepairMessages[randomIndex];
+    message = pickRandom(exitRepairMessages);
     bannerHTML = `<div class="game-repair-exit-banner"><p>${message}</p></div>`;
   }
   bannerPlaceholder.innerHTML = bannerHTML;
@@ -438,8 +427,7 @@ async function startWordGame() {
                 !noRandom.includes(w)
             );
           while (uniqueWords.length < 4 && fallbackPool.length > 0) {
-            const candidate =
-              fallbackPool[Math.floor(Math.random() * fallbackPool.length)];
+            const candidate = pickRandom(fallbackPool);
             if (!uniqueWords.includes(candidate)) uniqueWords.push(candidate);
           }
         }
@@ -558,8 +546,7 @@ async function startWordGame() {
               );
 
             while (uniqueWords.length < 4 && fallbackPool.length > 0) {
-              const candidate =
-                fallbackPool[Math.floor(Math.random() * fallbackPool.length)];
+              const candidate = pickRandom(fallbackPool);
               if (!uniqueWords.includes(candidate)) uniqueWords.push(candidate);
             }
           }
@@ -843,8 +830,7 @@ async function startWordGame() {
         );
 
       while (uniqueWords.length < 4 && fallbackPool.length > 0) {
-        const candidate =
-          fallbackPool[Math.floor(Math.random() * fallbackPool.length)];
+        const candidate = pickRandom(fallbackPool);
         if (!uniqueWords.includes(candidate)) {
           uniqueWords.push(candidate);
         }
@@ -1002,6 +988,11 @@ function buildCEFRLabel(level) {
   };
   const cls = classMap[level] || "unknown";
   return `<div class="game-cefr-label ${cls}">${level}</div>`;
+}
+
+function pickRandom(arr) {
+  if (!Array.isArray(arr) || arr.length === 0) return undefined;
+  return arr[Math.floor(Math.random() * arr.length)];
 }
 
 function shortGenderLabel(gender = "") {
@@ -2085,9 +2076,7 @@ async function fetchRandomWord() {
   }
 
   // Randomly select a result from the filtered results
-  const randomResult =
-    filteredResults[Math.floor(Math.random() * filteredResults.length)];
-
+  const randomResult = pickRandom(filteredResults);
   previousWord = randomResult.ord; // Update the previous word
 
   return {
