@@ -1410,7 +1410,7 @@ async function handleTranslationClick(
         },
         counter: 0, // Start counter for this word
         exerciseType: questionType,
-        clozedForm: correctTranslation, // << STORE the clozed form separately!
+        clozedForm: wordObj.clozeAnswer || wordObj.ord.split(",")[0].trim(), // ✅, // << STORE the clozed form separately!
       });
       // --- trigger Repair Mode immediately on 8th wrong word ---
       if (!repairMode && incorrectWordQueue.length >= REPAIR_ENTER) {
