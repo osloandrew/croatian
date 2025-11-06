@@ -579,11 +579,9 @@ footer .copyright {
   opacity: 1;
   transition: opacity 0.35s ease-in-out;
 }
-
 .game-fade.fade-out {
   opacity: 0;
 }
-
 .game-fade.fade-in {
   opacity: 1;
 }
