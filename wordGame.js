@@ -143,38 +143,63 @@ const exitRepairMessages = [
 
 // ───────────────── 4) Banner Helpers ─────────────────
 
+const bannerConfig = {
+  congratulations: {
+    class: "game-congratulations-banner",
+    messages: congratulationsMessages,
+  },
+  fallback: {
+    class: "game-fallback-banner",
+    messages: fallbackMessages,
+  },
+  streak: {
+    class: "game-streak-banner",
+    messages: streakMessages,
+  },
+  clearedPracticeWords: {
+    class: "game-cleared-practice-banner",
+    messages: clearedPracticeMessages,
+  },
+  levelLockLocked: {
+    class: "game-lock-banner",
+    messages: lockToggleMessages.locked,
+  },
+  levelLockUnlocked: {
+    class: "game-lock-banner",
+    messages: lockToggleMessages.unlocked,
+  },
+  enterRepair: {
+    class: "game-repair-enter-banner",
+    messages: enterRepairMessages,
+  },
+  exitRepair: {
+    class: "game-repair-exit-banner",
+    messages: exitRepairMessages,
+  },
+};
+
 function showBanner(type, level) {
   const bannerPlaceholder = document.getElementById("game-banner-placeholder");
-  let bannerHTML = "";
-  let message = "";
+  if (!bannerPlaceholder) return;
 
-  if (type === "congratulations") {
-    message = pickRandom(congratulationsMessages)?.replace("{X}", level);
-    bannerHTML = `<div class="game-congratulations-banner"><p>${message}</p></div>`;
-  } else if (type === "fallback") {
-    message = pickRandom(fallbackMessages)?.replace("{X}", level);
-    bannerHTML = `<div class="game-fallback-banner"><p>${message}</p></div>`;
-  } else if (type === "streak") {
-    message = pickRandom(streakMessages)?.replace("{X}", level);
-    bannerHTML = `<div class="game-streak-banner"><p>${message}</p></div>`;
-  } else if (type === "clearedPracticeWords") {
-    message = pickRandom(clearedPracticeMessages);
-    bannerHTML = `<div class="game-cleared-practice-banner"><p>${message}</p></div>`;
-  } else if (type === "levelLock") {
-    const messages =
-      level === "locked"
-        ? lockToggleMessages.locked
-        : lockToggleMessages.unlocked;
-    message = pickRandom(messages);
-    bannerHTML = `<div class="game-lock-banner"><p>${message}</p></div>`;
-  } else if (type === "enterRepair") {
-    message = pickRandom(enterRepairMessages);
-    bannerHTML = `<div class="game-repair-enter-banner"><p>${message}</p></div>`;
-  } else if (type === "exitRepair") {
-    message = pickRandom(exitRepairMessages);
-    bannerHTML = `<div class="game-repair-exit-banner"><p>${message}</p></div>`;
-  }
-  bannerPlaceholder.innerHTML = bannerHTML;
+  // Special handling for lock toggle
+  const key =
+    type === "levelLock"
+      ? level === "locked"
+        ? "levelLockLocked"
+        : "levelLockUnlocked"
+      : type;
+
+  const config = bannerConfig[key];
+  if (!config) return;
+
+  let message = pickRandom(config.messages);
+  if (level) message = message.replace("{X}", level);
+
+  bannerPlaceholder.innerHTML = `
+    <div class="${config.class}">
+      <p>${message}</p>
+    </div>`;
 }
 
 function hideAllBanners() {
@@ -314,400 +339,68 @@ function renderStats() {
 
 // ───────────────── 7) Game Flow ─────────────────
 
-async function startWordGame() {
-  document.getElementById("lock-icon").style.display = "inline";
-  const searchContainerInner = document.getElementById(
-    "search-container-inner"
-  ); // The container to update
-  const searchBarWrapper = document.getElementById("search-bar-wrapper");
-  const randomBtn = document.getElementById("random-btn");
+function prepareGameUI() {
+  // Show lock icon visual
+  const lockIcon = document.getElementById("lock-icon");
+  if (lockIcon) lockIcon.style.display = "inline";
+  // Quick DOM utilities
+  const el = (id) => document.getElementById(id);
+  // Collect refs (unchanged names from your function)
+  const refs = {
+    searchContainerInner: el("search-container-inner"),
+    searchBarWrapper: el("search-bar-wrapper"),
+    randomBtn: el("random-btn"),
+    posFilterContainer: document.querySelector(".pos-filter"),
+    genreFilterContainer: el("genre-filter"),
+    cefrFilterContainer: document.querySelector(".cefr-filter"),
+    gameEnglishFilterContainer: document.querySelector(".game-english-filter"),
+    posSelect: el("pos-select"),
+    cefrSelect: el("cefr-select"),
+    gameEnglishSelect: el("game-english-select"),
+  };
 
-  // Filter containers for POS, Genre, and CEFR
-  const posFilterContainer = document.querySelector(".pos-filter");
-  const genreFilterContainer = document.getElementById("genre-filter"); // Get the Genre filter container
-  const cefrFilterContainer = document.querySelector(".cefr-filter"); // Get the CEFR filter container
-  const gameEnglishFilterContainer = document.querySelector(
-    ".game-english-filter"
-  );
-
-  // Filter dropdowns for POS, Genre, and CEFR
-  const posSelect = document.getElementById("pos-select");
-  const cefrSelect = document.getElementById("cefr-select");
-  const gameEnglishSelect = document.getElementById("game-english-select");
-
-  gameActive = true;
+  // Behavior identical to current code
   showLandingCard(false);
-  hideAllBanners(); // Hide banners before starting the new word
-  // --- Auto toggle Repair Mode based on backlog size ---
+  hideAllBanners();
+
+  // Hide/search controls as before
+  if (refs.searchBarWrapper) refs.searchBarWrapper.style.display = "none";
+  if (refs.randomBtn) refs.randomBtn.style.display = "none";
+  if (refs.genreFilterContainer)
+    refs.genreFilterContainer.style.display = "none";
+  if (refs.posFilterContainer) refs.posFilterContainer.style.display = "none";
+  if (refs.cefrSelect) refs.cefrSelect.disabled = false;
+  if (refs.cefrFilterContainer)
+    refs.cefrFilterContainer.classList.remove("disabled");
+  if (refs.gameEnglishSelect)
+    refs.gameEnglishSelect.style.display = "inline-flex";
+  if (refs.gameEnglishFilterContainer)
+    refs.gameEnglishFilterContainer.style.display = "inline-flex";
+  if (refs.searchContainerInner)
+    refs.searchContainerInner.classList.add("word-game-active");
+  // Reset POS select like before
+  if (refs.posSelect) refs.posSelect.value = "";
+  return refs;
+}
+
+function toggleRepairModeAuto() {
   if (!repairMode && incorrectWordQueue.length >= REPAIR_ENTER) {
     enterRepairMode();
   } else if (repairMode && incorrectWordQueue.length <= REPAIR_EXIT) {
     exitRepairMode();
   }
-  searchBarWrapper.style.display = "none"; // Hide search-bar-wrapper
-  randomBtn.style.display = "none"; // Hide random button
+}
 
-  searchContainerInner.classList.add("word-game-active"); // Indicate word game is active
+function serveFromQueue_repairMode(firstWordInQueue) {
+  // Rotate so we cycle through all wrong words
+  const item = incorrectWordQueue.shift();
+  incorrectWordQueue.push(item);
 
-  // Handle "word-game" option
-  showLandingCard(false);
+  currentWord = item.wordObj.ord;
+  correctTranslation = item.wordObj.engelsk;
 
-  genreFilterContainer.style.display = "none";
-
-  gameEnglishSelect.style.display = "inline-flex"; // Hide random button
-  gameEnglishFilterContainer.style.display = "inline-flex";
-
-  posSelect.value = ""; // Reset to "Part of Speech" option
-  posFilterContainer.style.display = "none";
-
-  cefrSelect.disabled = false;
-  cefrFilterContainer.classList.remove("disabled");
-
-  // Check if all available words have been answered correctly
-  const totalWords = results.filter(
-    (r) => r.CEFR === currentCEFR && !noRandom.includes(r.ord.toLowerCase())
-  );
-  if (correctlyAnsweredWords.length >= totalWords.length) {
-    console.log(
-      "All words answered correctly, resetting correctlyAnsweredWords array."
-    );
-    correctlyAnsweredWords = []; // Reset the array
-  }
-
-  // --- Reintro logic (normal vs. Repair Mode) ---
-  // In Repair Mode: always pull from the queue immediately (no counters/thresholds).
-  // Outside Repair Mode: keep your original "after N words" and counter>=10 behavior.
-  if (incorrectWordQueue.length > 0) {
-    if (repairMode) {
-      // Rotate queue so we cycle through all wrong words
-      const firstWordInQueue = incorrectWordQueue.shift();
-      incorrectWordQueue.push(firstWordInQueue);
-      // Render exactly as you already do, but skip the counter/threshold gate & pop sound
-      currentWord = firstWordInQueue.wordObj.ord;
-      correctTranslation = firstWordInQueue.wordObj.engelsk;
-
-      if (firstWordInQueue.exerciseType === "cloze") {
-        const randomWordObj = firstWordInQueue.wordObj;
-        const baseWord = randomWordObj.ord.split(",")[0].trim().toLowerCase();
-        const matchingEntry = results.find(
-          (r) =>
-            r.ord.toLowerCase() === randomWordObj.ord.toLowerCase() &&
-            r.gender === randomWordObj.gender &&
-            r.CEFR === randomWordObj.CEFR
-        );
-        const exampleText = matchingEntry?.eksempel || "";
-        const firstSentence = exampleText.split(/(?<=[.!?])\s+/)[0];
-        const tokens = firstSentence.match(/\p{L}+/gu) || [];
-
-        let clozedForm = firstWordInQueue.clozedForm;
-        const formattedClozed = clozedForm.toLowerCase();
-        const distractors = generateClozeDistractors(
-          baseWord,
-          clozedForm,
-          randomWordObj.CEFR,
-          randomWordObj.gender
-        );
-
-        let allWords = shuffleArray([formattedClozed, ...distractors]);
-        let uniqueWords = ensureUniqueDisplayedValues(allWords);
-
-        if (/^\p{Lu}/u.test(clozedForm)) {
-          uniqueWords = uniqueWords.map(
-            (word) => word.charAt(0).toUpperCase() + word.slice(1)
-          );
-        }
-        if (uniqueWords.length < 4) {
-          const fallbackPool = results
-            .map((r) => r.ord.split(",")[0].trim().toLowerCase())
-            .filter(
-              (w) =>
-                w &&
-                w !== formattedClozed &&
-                !uniqueWords.includes(w) &&
-                !noRandom.includes(w)
-            );
-          while (uniqueWords.length < 4 && fallbackPool.length > 0) {
-            const candidate = pickRandom(fallbackPool);
-            if (!uniqueWords.includes(candidate)) uniqueWords.push(candidate);
-          }
-        }
-        renderClozeGameUI(randomWordObj, uniqueWords, clozedForm, true);
-      } else if (firstWordInQueue.exerciseType === "listening") {
-        let incorrectTranslations = fetchIncorrectTranslations(
-          firstWordInQueue.wordObj.gender,
-          correctTranslation,
-          firstWordInQueue.wordObj.CEFR
-        );
-        if (incorrectTranslations.length < 3) {
-          const additionalTranslations =
-            fetchIncorrectTranslationsFromOtherCEFRLevels(
-              firstWordInQueue.wordObj.gender,
-              correctTranslation
-            );
-          incorrectTranslations = incorrectTranslations.concat(
-            additionalTranslations
-          );
-        }
-        const allTranslations = shuffleArray([
-          correctTranslation,
-          ...incorrectTranslations,
-        ]);
-        const uniqueDisplayedTranslations =
-          ensureUniqueDisplayedValues(allTranslations);
-        renderListeningGameUI(
-          firstWordInQueue.wordObj,
-          uniqueDisplayedTranslations,
-          true
-        );
-      } else {
-        // non-cloze reintro (same as your existing path)
-        let incorrectTranslations = fetchIncorrectTranslations(
-          firstWordInQueue.wordObj.gender,
-          correctTranslation,
-          firstWordInQueue.wordObj.CEFR
-        );
-        if (incorrectTranslations.length < 3) {
-          const additionalTranslations =
-            fetchIncorrectTranslationsFromOtherCEFRLevels(
-              firstWordInQueue.wordObj.gender,
-              correctTranslation
-            );
-          incorrectTranslations = incorrectTranslations.concat(
-            additionalTranslations
-          );
-        }
-        const allTranslations = shuffleArray([
-          correctTranslation,
-          ...incorrectTranslations,
-        ]);
-        const uniqueDisplayedTranslations =
-          ensureUniqueDisplayedValues(allTranslations);
-        renderWordGameUI(
-          firstWordInQueue.wordObj,
-          uniqueDisplayedTranslations,
-          true
-        );
-      }
-
-      firstWordInQueue.shown = true;
-      // Do NOT advance wordsSinceLastIncorrect in Repair Mode
-      renderStats();
-      return;
-    } else if (wordsSinceLastIncorrect >= reintroduceThreshold) {
-      // --- original non-repair behavior preserved ---
-      const firstWordInQueue = incorrectWordQueue[0];
-      if (firstWordInQueue.counter >= 10) {
-        popChime.currentTime = 0;
-        popChime.play();
-
-        currentWord = firstWordInQueue.wordObj.ord;
-        correctTranslation = firstWordInQueue.wordObj.engelsk;
-
-        if (firstWordInQueue.exerciseType === "cloze") {
-          const randomWordObj = firstWordInQueue.wordObj;
-          const baseWord = randomWordObj.ord.split(",")[0].trim().toLowerCase();
-          const matchingEntry = results.find(
-            (r) =>
-              r.ord.toLowerCase() === randomWordObj.ord.toLowerCase() &&
-              r.gender === randomWordObj.gender &&
-              r.CEFR === randomWordObj.CEFR
-          );
-          const exampleText = matchingEntry?.eksempel || "";
-          const firstSentence = exampleText.split(/(?<=[.!?])\s+/)[0];
-          const tokens = firstSentence.match(/\p{L}+/gu) || [];
-
-          let clozedForm = firstWordInQueue.clozedForm;
-          const formattedClozed = clozedForm.toLowerCase();
-
-          const distractors = generateClozeDistractors(
-            baseWord,
-            clozedForm,
-            randomWordObj.CEFR,
-            randomWordObj.gender
-          );
-
-          let allWords = shuffleArray([formattedClozed, ...distractors]);
-          let uniqueWords = ensureUniqueDisplayedValues(allWords);
-
-          if (/^\p{Lu}/u.test(clozedForm)) {
-            uniqueWords = uniqueWords.map(
-              (word) => word.charAt(0).toUpperCase() + word.slice(1)
-            );
-          }
-          if (uniqueWords.length < 4) {
-            const fallbackPool = results
-              .map((r) => r.ord.split(",")[0].trim().toLowerCase())
-              .filter(
-                (w) =>
-                  w &&
-                  w !== formattedClozed &&
-                  !uniqueWords.includes(w) &&
-                  !noRandom.includes(w)
-              );
-
-            while (uniqueWords.length < 4 && fallbackPool.length > 0) {
-              const candidate = pickRandom(fallbackPool);
-              if (!uniqueWords.includes(candidate)) uniqueWords.push(candidate);
-            }
-          }
-          renderClozeGameUI(
-            firstWordInQueue.wordObj,
-            uniqueWords,
-            clozedForm,
-            true
-          );
-        } else if (firstWordInQueue.exerciseType === "listening") {
-          let incorrectTranslations = fetchIncorrectTranslations(
-            firstWordInQueue.wordObj.gender,
-            correctTranslation,
-            firstWordInQueue.wordObj.CEFR
-          );
-          if (incorrectTranslations.length < 3) {
-            const additionalTranslations =
-              fetchIncorrectTranslationsFromOtherCEFRLevels(
-                firstWordInQueue.wordObj.gender,
-                correctTranslation
-              );
-            incorrectTranslations = incorrectTranslations.concat(
-              additionalTranslations
-            );
-          }
-          const allTranslations = shuffleArray([
-            correctTranslation,
-            ...incorrectTranslations,
-          ]);
-          const uniqueDisplayedTranslations =
-            ensureUniqueDisplayedValues(allTranslations);
-          renderListeningGameUI(
-            firstWordInQueue.wordObj,
-            uniqueDisplayedTranslations,
-            true
-          );
-        } else {
-          let incorrectTranslations = fetchIncorrectTranslations(
-            firstWordInQueue.wordObj.gender,
-            correctTranslation,
-            firstWordInQueue.wordObj.CEFR
-          );
-
-          if (incorrectTranslations.length < 3) {
-            const additionalTranslations =
-              fetchIncorrectTranslationsFromOtherCEFRLevels(
-                firstWordInQueue.wordObj.gender,
-                correctTranslation
-              );
-            incorrectTranslations = incorrectTranslations.concat(
-              additionalTranslations
-            );
-          }
-
-          const allTranslations = shuffleArray([
-            correctTranslation,
-            ...incorrectTranslations,
-          ]);
-          const uniqueDisplayedTranslations =
-            ensureUniqueDisplayedValues(allTranslations);
-
-          renderWordGameUI(
-            firstWordInQueue.wordObj,
-            uniqueDisplayedTranslations,
-            true
-          );
-        }
-
-        firstWordInQueue.shown = true;
-        wordsSinceLastIncorrect = 0;
-        renderStats();
-        return;
-      } else {
-        incorrectWordQueue.forEach((word) => word.counter++);
-      }
-    }
-  }
-
-  wordsSinceLastIncorrect++; // Increment counter for words since last incorrect word
-
-  // Use the currentCEFR directly, since it's dynamically updated when the user selects a new CEFR level
-  if (!currentCEFR) {
-    currentCEFR = "A1"; // Default to A1 if no level is set
-  }
-
-  // Fetch a random word that respects CEFR and POS filters
-  const randomWordObj = await fetchRandomWord();
-
-  // If no words match the filters, stop the game
-  if (!randomWordObj) return;
-
-  currentWord = randomWordObj;
-  correctTranslation = randomWordObj.engelsk;
-
-  const questionWeights = {
-    A1: { cloze: 0.2, listening: 0.25 }, // matching implicitly 0.55
-    A2: { cloze: 0.35, listening: 0.25 }, // matching 0.40
-    B1: { cloze: 0.5, listening: 0.25 }, // matching 0.25
-    B2: { cloze: 0.6, listening: 0.25 }, // matching 0.15
-    C: { cloze: 0.7, listening: 0.2 }, // matching 0.10
-  };
-
-  const weights = questionWeights[currentCEFR] || questionWeights["A1"];
-  const rand = Math.random();
-  let questionType = "flashcard"; // default
-
-  if (rand < weights.cloze) questionType = "cloze";
-  else if (rand < weights.cloze + weights.listening) questionType = "listening";
-
-  console.log("Question type:", questionType);
-  const bannedWordClasses = ["numeral", "pronoun", "possessive", "determiner"];
-
-  // Fetch incorrect translations with the same gender
-  const incorrectTranslations = fetchIncorrectTranslations(
-    randomWordObj.gender,
-    correctTranslation,
-    currentCEFR
-  );
-
-  // Shuffle correct and incorrect translations into an array
-  const allTranslations = shuffleArray([
-    correctTranslation,
-    ...incorrectTranslations,
-  ]);
-
-  // Ensure no duplicate displayed values
-  const uniqueDisplayedTranslations =
-    ensureUniqueDisplayedValues(allTranslations);
-  // Skip cloze if the selected word is in a banned class
-  if (
-    questionType === "cloze" &&
-    bannedWordClasses.some((b) =>
-      randomWordObj.gender?.toLowerCase().startsWith(b)
-    )
-  ) {
-    renderWordGameUI(randomWordObj, uniqueDisplayedTranslations, false);
-    return;
-  }
-
-  console.log(
-    "Showing " +
-      (questionType === "cloze"
-        ? "CLOZE"
-        : questionType === "listening"
-        ? "LISTENING"
-        : "FLASHCARD") +
-      " question for:",
-    randomWordObj.ord
-  );
-
-  if (questionType === "cloze") {
-    console.log(
-      `[CLOZE] Attempting cloze for: "${randomWordObj.ord}" (${randomWordObj.gender}, ${randomWordObj.CEFR})`
-    );
-  } else {
-    console.log(
-      `[FLASHCARD] Showing regular question for: "${randomWordObj.ord}"`
-    );
-  }
-
-  if (questionType === "cloze") {
+  if (item.exerciseType === "cloze") {
+    const randomWordObj = item.wordObj;
     const baseWord = randomWordObj.ord.split(",")[0].trim().toLowerCase();
     const matchingEntry = results.find(
       (r) =>
@@ -717,95 +410,13 @@ async function startWordGame() {
     );
     const exampleText = matchingEntry?.eksempel || "";
     const firstSentence = exampleText.split(/(?<=[.!?])\s+/)[0];
-    const tokens = firstSentence.match(/\p{L}+/gu) || [];
 
-    let clozedForm = null;
-    const baseWordTokens = baseWord.split(/\s+/);
+    let clozedForm = item.clozedForm;
+    const formattedClozed = clozedForm.toLowerCase();
 
-    for (let start = 0; start < tokens.length; start++) {
-      for (let end = start + 1; end <= tokens.length; end++) {
-        const group = tokens.slice(start, end);
-        const joinedWithSpace = group.join(" ").toLowerCase();
-        const joinedWithHyphen = group.join("-").toLowerCase();
-
-        if (
-          matchesInflectedForm(baseWord, joinedWithSpace, randomWordObj.gender)
-        ) {
-          clozedForm = group.join(" ");
-          break;
-        }
-        if (
-          matchesInflectedForm(baseWord, joinedWithHyphen, randomWordObj.gender)
-        ) {
-          clozedForm = group.join("-");
-          break;
-        }
-      }
-      if (clozedForm) break;
-    }
-
-    if (!clozedForm) {
-      const cleanedTokens = tokens.map((t) =>
-        t.toLowerCase().replace(/[.,!?;:()"]/g, "")
-      );
-
-      const normalizedTokens = cleanedTokens;
-      const normalizedBase = baseWord;
-
-      let fallbackClozed = null;
-      for (let len = normalizedBase.length; len > 2; len--) {
-        const prefix = normalizedBase.slice(0, len);
-        const matchIndex = normalizedTokens.findIndex((t) =>
-          t.startsWith(prefix)
-        );
-        if (matchIndex !== -1) {
-          // Try to recover the full expression from the token window
-          const endIndex = matchIndex + baseWordTokens.length - 1;
-          const matchedTokens = tokens.slice(matchIndex, endIndex + 1);
-
-          const restOfBase = baseWordTokens.slice(1).join(" ");
-          const restOfSentence = matchedTokens.slice(1).join(" ").toLowerCase();
-
-          if (restOfSentence === restOfBase) {
-            fallbackClozed = matchedTokens.join(" "); // e.g., "ryddet ut"
-          } else {
-            fallbackClozed = tokens[matchIndex]; // fallback to just "ryddet"
-          }
-
-          break;
-        }
-      }
-
-      if (fallbackClozed) {
-        clozedForm = fallbackClozed;
-      } else {
-        console.warn("❌ CLOZE fallback triggered!");
-        console.warn("Word:", randomWordObj.ord);
-        console.warn("Sentence:", firstSentence);
-        console.warn("Base word for matching:", baseWord);
-        console.warn("Tokens analyzed:", cleanedTokens);
-        console.warn("Gender/POS:", randomWordObj.gender);
-        console.warn(
-          "No matching token found after analyzing sentence for cloze insertion."
-        );
-        console.warn("⚠️ Falling back to flashcard due to cloze failure");
-        console.log("Fallback word object:", randomWordObj);
-        console.log("Fallback translations:", uniqueDisplayedTranslations);
-
-        renderWordGameUI(randomWordObj, uniqueDisplayedTranslations, false);
-        return;
-      }
-    }
-
-    // Format the clozed word and get its final letter
-    const formatCase = (word) => word.charAt(0).toLowerCase() + word.slice(1);
-
-    let formattedClozed = formatCase(clozedForm);
-    const wasCapitalizedFromLowercase =
-      !/^\p{Lu}/u.test(baseWord) && /^\p{Lu}/u.test(clozedForm);
     const distractors = generateClozeDistractors(
       baseWord,
-      formattedClozed,
+      clozedForm,
       randomWordObj.CEFR,
       randomWordObj.gender
     );
@@ -813,15 +424,120 @@ async function startWordGame() {
     let allWords = shuffleArray([formattedClozed, ...distractors]);
     let uniqueWords = ensureUniqueDisplayedValues(allWords);
 
-    if (wasCapitalizedFromLowercase) {
+    if (/^\p{Lu}/u.test(clozedForm)) {
       uniqueWords = uniqueWords.map(
         (word) => word.charAt(0).toUpperCase() + word.slice(1)
       );
-      formattedClozed =
-        formattedClozed.charAt(0).toUpperCase() + formattedClozed.slice(1);
     }
 
-    // ✅ Guarantee 4 options in CLOZE mode
+    if (uniqueWords.length < 4) {
+      const fallbackPool = results
+        .map((r) => r.ord.split(",")[0].trim().toLowerCase())
+        .filter(
+          (w) =>
+            w &&
+            w !== formattedClozed &&
+            !uniqueWords.includes(w) &&
+            !noRandom.includes(w)
+        );
+      while (uniqueWords.length < 4 && fallbackPool.length > 0) {
+        const candidate = pickRandom(fallbackPool);
+        if (!uniqueWords.includes(candidate)) uniqueWords.push(candidate);
+      }
+    }
+    renderClozeGameUI(randomWordObj, uniqueWords, clozedForm, true);
+  } else if (item.exerciseType === "listening") {
+    let incorrectTranslations = fetchIncorrectTranslations(
+      item.wordObj.gender,
+      correctTranslation,
+      item.wordObj.CEFR
+    );
+    if (incorrectTranslations.length < 3) {
+      const additionalTranslations =
+        fetchIncorrectTranslationsFromOtherCEFRLevels(
+          item.wordObj.gender,
+          correctTranslation
+        );
+      incorrectTranslations = incorrectTranslations.concat(
+        additionalTranslations
+      );
+    }
+    const allTranslations = shuffleArray([
+      correctTranslation,
+      ...incorrectTranslations,
+    ]);
+    const uniqueDisplayedTranslations =
+      ensureUniqueDisplayedValues(allTranslations);
+    renderListeningGameUI(item.wordObj, uniqueDisplayedTranslations, true);
+  } else {
+    let incorrectTranslations = fetchIncorrectTranslations(
+      item.wordObj.gender,
+      correctTranslation,
+      item.wordObj.CEFR
+    );
+    if (incorrectTranslations.length < 3) {
+      const additionalTranslations =
+        fetchIncorrectTranslationsFromOtherCEFRLevels(
+          item.wordObj.gender,
+          correctTranslation
+        );
+      incorrectTranslations = incorrectTranslations.concat(
+        additionalTranslations
+      );
+    }
+    const allTranslations = shuffleArray([
+      correctTranslation,
+      ...incorrectTranslations,
+    ]);
+    const uniqueDisplayedTranslations =
+      ensureUniqueDisplayedValues(allTranslations);
+    renderWordGameUI(item.wordObj, uniqueDisplayedTranslations, true);
+  }
+
+  item.shown = true;
+  // Do NOT advance wordsSinceLastIncorrect in Repair Mode
+  renderStats();
+}
+
+function serveFromQueue_nonRepairMode(firstWordInQueue) {
+  // pop sound only when counter >= 10
+  popChime.currentTime = 0;
+  popChime.play();
+
+  currentWord = firstWordInQueue.wordObj.ord;
+  correctTranslation = firstWordInQueue.wordObj.engelsk;
+
+  if (firstWordInQueue.exerciseType === "cloze") {
+    const randomWordObj = firstWordInQueue.wordObj;
+    const baseWord = randomWordObj.ord.split(",")[0].trim().toLowerCase();
+    const matchingEntry = results.find(
+      (r) =>
+        r.ord.toLowerCase() === randomWordObj.ord.toLowerCase() &&
+        r.gender === randomWordObj.gender &&
+        r.CEFR === randomWordObj.CEFR
+    );
+    const exampleText = matchingEntry?.eksempel || "";
+    const firstSentence = exampleText.split(/(?<=[.!?])\s+/)[0];
+
+    let clozedForm = firstWordInQueue.clozedForm;
+    const formattedClozed = clozedForm.toLowerCase();
+
+    const distractors = generateClozeDistractors(
+      baseWord,
+      clozedForm,
+      randomWordObj.CEFR,
+      randomWordObj.gender
+    );
+
+    let allWords = shuffleArray([formattedClozed, ...distractors]);
+    let uniqueWords = ensureUniqueDisplayedValues(allWords);
+
+    if (/^\p{Lu}/u.test(clozedForm)) {
+      uniqueWords = uniqueWords.map(
+        (word) => word.charAt(0).toUpperCase() + word.slice(1)
+      );
+    }
+
     if (uniqueWords.length < 4) {
       const fallbackPool = results
         .map((r) => r.ord.split(",")[0].trim().toLowerCase())
@@ -835,24 +551,320 @@ async function startWordGame() {
 
       while (uniqueWords.length < 4 && fallbackPool.length > 0) {
         const candidate = pickRandom(fallbackPool);
-        if (!uniqueWords.includes(candidate)) {
-          uniqueWords.push(candidate);
-        }
+        if (!uniqueWords.includes(candidate)) uniqueWords.push(candidate);
       }
     }
 
-    renderClozeGameUI(randomWordObj, uniqueWords, formattedClozed, false);
+    renderClozeGameUI(firstWordInQueue.wordObj, uniqueWords, clozedForm, true);
+  } else if (firstWordInQueue.exerciseType === "listening") {
+    let incorrectTranslations = fetchIncorrectTranslations(
+      firstWordInQueue.wordObj.gender,
+      correctTranslation,
+      firstWordInQueue.wordObj.CEFR
+    );
+    if (incorrectTranslations.length < 3) {
+      const additionalTranslations =
+        fetchIncorrectTranslationsFromOtherCEFRLevels(
+          firstWordInQueue.wordObj.gender,
+          correctTranslation
+        );
+      incorrectTranslations = incorrectTranslations.concat(
+        additionalTranslations
+      );
+    }
+    const allTranslations = shuffleArray([
+      correctTranslation,
+      ...incorrectTranslations,
+    ]);
+    const uniqueDisplayedTranslations =
+      ensureUniqueDisplayedValues(allTranslations);
+    renderListeningGameUI(
+      firstWordInQueue.wordObj,
+      uniqueDisplayedTranslations,
+      true
+    );
+  } else {
+    let incorrectTranslations = fetchIncorrectTranslations(
+      firstWordInQueue.wordObj.gender,
+      correctTranslation,
+      firstWordInQueue.wordObj.CEFR
+    );
+
+    if (incorrectTranslations.length < 3) {
+      const additionalTranslations =
+        fetchIncorrectTranslationsFromOtherCEFRLevels(
+          firstWordInQueue.wordObj.gender,
+          correctTranslation
+        );
+      incorrectTranslations = incorrectTranslations.concat(
+        additionalTranslations
+      );
+    }
+
+    const allTranslations = shuffleArray([
+      correctTranslation,
+      ...incorrectTranslations,
+    ]);
+    const uniqueDisplayedTranslations =
+      ensureUniqueDisplayedValues(allTranslations);
+
+    renderWordGameUI(
+      firstWordInQueue.wordObj,
+      uniqueDisplayedTranslations,
+      true
+    );
+  }
+
+  firstWordInQueue.shown = true;
+  wordsSinceLastIncorrect = 0;
+  renderStats();
+}
+
+function maybeServeFromRepairQueue() {
+  if (incorrectWordQueue.length === 0) return false;
+
+  if (repairMode) {
+    serveFromQueue_repairMode(incorrectWordQueue[0]);
+    return true;
+  }
+
+  if (wordsSinceLastIncorrect >= reintroduceThreshold) {
+    const firstWordInQueue = incorrectWordQueue[0];
+    if (firstWordInQueue.counter >= 10) {
+      serveFromQueue_nonRepairMode(firstWordInQueue);
+      return true;
+    } else {
+      // increment counters if threshold reached but not ready to pop
+      incorrectWordQueue.forEach((w) => w.counter++);
+    }
+  }
+
+  return false;
+}
+
+function pickQuestionType(cefr) {
+  const questionWeights = {
+    A1: { cloze: 0.2, listening: 0.25 }, // matching 0.55
+    A2: { cloze: 0.35, listening: 0.25 }, // matching 0.40
+    B1: { cloze: 0.5, listening: 0.25 }, // matching 0.25
+    B2: { cloze: 0.6, listening: 0.25 }, // matching 0.15
+    C: { cloze: 0.7, listening: 0.2 }, // matching 0.10
+  };
+  const weights = questionWeights[cefr] || questionWeights["A1"];
+  const r = Math.random();
+  if (r < weights.cloze) return "cloze";
+  if (r < weights.cloze + weights.listening) return "listening";
+  return "flashcard";
+}
+
+async function renderClozeQuestion(randomWordObj, uniqueDisplayedTranslations) {
+  const baseWord = randomWordObj.ord.split(",")[0].trim().toLowerCase();
+  const matchingEntry = results.find(
+    (r) =>
+      r.ord.toLowerCase() === randomWordObj.ord.toLowerCase() &&
+      r.gender === randomWordObj.gender &&
+      r.CEFR === randomWordObj.CEFR
+  );
+  const exampleText = matchingEntry?.eksempel || "";
+  const firstSentence = exampleText.split(/(?<=[.!?])\s+/)[0];
+  const tokens = firstSentence.match(/\p{L}+/gu) || [];
+
+  let clozedForm = null;
+  const baseWordTokens = baseWord.split(/\s+/);
+
+  // original nested search
+  for (let start = 0; start < tokens.length; start++) {
+    for (let end = start + 1; end <= tokens.length; end++) {
+      const group = tokens.slice(start, end);
+      const joinedWithSpace = group.join(" ").toLowerCase();
+      const joinedWithHyphen = group.join("-").toLowerCase();
+
+      if (
+        matchesInflectedForm(baseWord, joinedWithSpace, randomWordObj.gender)
+      ) {
+        clozedForm = group.join(" ");
+        break;
+      }
+      if (
+        matchesInflectedForm(baseWord, joinedWithHyphen, randomWordObj.gender)
+      ) {
+        clozedForm = group.join("-");
+        break;
+      }
+    }
+    if (clozedForm) break;
+  }
+
+  if (!clozedForm) {
+    const cleanedTokens = tokens.map((t) =>
+      t.toLowerCase().replace(/[.,!?;:()"]/g, "")
+    );
+    const normalizedTokens = cleanedTokens;
+    const normalizedBase = baseWord;
+
+    let fallbackClozed = null;
+    for (let len = normalizedBase.length; len > 2; len--) {
+      const prefix = normalizedBase.slice(0, len);
+      const matchIndex = normalizedTokens.findIndex((t) =>
+        t.startsWith(prefix)
+      );
+      if (matchIndex !== -1) {
+        const endIndex = matchIndex + baseWordTokens.length - 1;
+        const matchedTokens = tokens.slice(matchIndex, endIndex + 1);
+
+        const restOfBase = baseWordTokens.slice(1).join(" ");
+        const restOfSentence = matchedTokens.slice(1).join(" ").toLowerCase();
+
+        if (restOfSentence === restOfBase) {
+          fallbackClozed = matchedTokens.join(" ");
+        } else {
+          fallbackClozed = tokens[matchIndex];
+        }
+        break;
+      }
+    }
+
+    if (fallbackClozed) {
+      clozedForm = fallbackClozed;
+    } else {
+      // fallback to flashcard if cloze not possible
+      renderWordGameUI(randomWordObj, uniqueDisplayedTranslations, false);
+      return;
+    }
+  }
+
+  const formatCase = (w) => w.charAt(0).toLowerCase() + w.slice(1);
+  let formattedClozed = formatCase(clozedForm);
+  const wasCapitalizedFromLowercase =
+    !/^\p{Lu}/u.test(baseWord) && /^\p{Lu}/u.test(clozedForm);
+
+  const distractors = generateClozeDistractors(
+    baseWord,
+    formattedClozed,
+    randomWordObj.CEFR,
+    randomWordObj.gender
+  );
+
+  let allWords = shuffleArray([formattedClozed, ...distractors]);
+  let uniqueWords = ensureUniqueDisplayedValues(allWords);
+
+  if (wasCapitalizedFromLowercase) {
+    uniqueWords = uniqueWords.map(
+      (word) => word.charAt(0).toUpperCase() + word.slice(1)
+    );
+    formattedClozed =
+      formattedClozed.charAt(0).toUpperCase() + formattedClozed.slice(1);
+  }
+
+  if (uniqueWords.length < 4) {
+    const fallbackPool = results
+      .map((r) => r.ord.split(",")[0].trim().toLowerCase())
+      .filter(
+        (w) =>
+          w &&
+          w !== formattedClozed &&
+          !uniqueWords.includes(w) &&
+          !noRandom.includes(w)
+      );
+
+    while (uniqueWords.length < 4 && fallbackPool.length > 0) {
+      const candidate = pickRandom(fallbackPool);
+      if (!uniqueWords.includes(candidate)) {
+        uniqueWords.push(candidate);
+      }
+    }
+  }
+
+  await renderClozeGameUI(randomWordObj, uniqueWords, formattedClozed, false);
+}
+
+async function serveNewWord() {
+  // Keep this exactly like before
+  wordsSinceLastIncorrect++;
+
+  if (!currentCEFR) currentCEFR = "A1";
+
+  const randomWordObj = await fetchRandomWord();
+  if (!randomWordObj) return;
+
+  currentWord = randomWordObj;
+  correctTranslation = randomWordObj.engelsk;
+
+  const questionType = pickQuestionType(randomWordObj.CEFR);
+  console.log("Question type:", questionType);
+
+  const bannedWordClasses = ["numeral", "pronoun", "possessive", "determiner"];
+
+  const incorrectTranslations = fetchIncorrectTranslations(
+    randomWordObj.gender,
+    correctTranslation,
+    currentCEFR
+  );
+
+  const allTranslations = shuffleArray([
+    correctTranslation,
+    ...incorrectTranslations,
+  ]);
+  const uniqueDisplayedTranslations =
+    ensureUniqueDisplayedValues(allTranslations);
+
+  // Skip cloze for banned classes
+  if (
+    questionType === "cloze" &&
+    bannedWordClasses.some((b) =>
+      randomWordObj.gender?.toLowerCase().startsWith(b)
+    )
+  ) {
+    renderWordGameUI(randomWordObj, uniqueDisplayedTranslations, false);
+    return;
+  }
+
+  // Logging parity
+  console.log(
+    "Showing " +
+      (questionType === "cloze"
+        ? "CLOZE"
+        : questionType === "listening"
+        ? "LISTENING"
+        : "FLASHCARD") +
+      " question for:",
+    randomWordObj.ord
+  );
+  if (questionType === "cloze") {
+    console.log(
+      `[CLOZE] Attempting cloze for: "${randomWordObj.ord}" (${randomWordObj.gender}, ${randomWordObj.CEFR})`
+    );
+  } else {
+    console.log(
+      `[FLASHCARD] Showing regular question for: "${randomWordObj.ord}"`
+    );
+  }
+
+  if (questionType === "cloze") {
+    await renderClozeQuestion(randomWordObj, uniqueDisplayedTranslations);
   } else if (questionType === "listening") {
     renderListeningGameUI(randomWordObj, uniqueDisplayedTranslations, false);
   } else {
     renderWordGameUI(randomWordObj, uniqueDisplayedTranslations, false);
   }
 
-  // Render the updated stats box
   renderStats();
   if (questionType !== "cloze") {
     displayPronunciation(currentWord);
   }
+}
+
+async function startWordGame() {
+  const refs = prepareGameUI();
+  gameActive = true;
+
+  toggleRepairModeAuto();
+
+  // If we served a queued item (repair or non-repair), stop here
+  if (maybeServeFromRepairQueue()) return;
+
+  // Otherwise, serve a fresh word
+  await serveNewWord();
 }
 
 function ensureUniqueDisplayedValues(translations) {
@@ -1025,6 +1037,23 @@ function shortGenderLabel(gender = "") {
   return map[key] || gender;
 }
 
+function smoothReplace(contentHTML) {
+  gameContainer.classList.remove("show");
+  gameContainer.classList.add("game-fade");
+
+  // Fade out
+  gameContainer.style.opacity = "0";
+
+  setTimeout(() => {
+    gameContainer.innerHTML = contentHTML;
+    // Fade in
+    requestAnimationFrame(() => {
+      gameContainer.style.opacity = "1";
+      gameContainer.classList.add("show");
+    });
+  }, 250); // 250ms fade-out before showing new content
+}
+
 function renderGameUI({
   mode, // "flashcard" | "cloze" | "listening"
   wordObj,
@@ -1052,13 +1081,13 @@ function renderGameUI({
   } else if (mode === "listening") {
     const hidden = wordObj.ord.split(",")[0].trim();
     wordAreaHTML = `
-      <div style="display:flex;justify-content:center;align-items:center;min-height:80px;">
-        <div id="listening-audio-button" class="audio-button" style="cursor:pointer;display:block;">
-          <img src="Resources/Photos/pronunciation.svg" alt="Play pronunciation" style="width:64px;height:64px;filter:invert(0);transition:transform 0.1s ease;" />
-        </div>
-        <h2 id="hidden-word" style="display:none;">${hidden}</h2>
-      </div>
-    `;
+  <div style="display:flex;justify-content:center;align-items:center;min-height:100px;">
+    <div id="listening-audio-button" class="audio-button" title="Play pronunciation">
+      <img src="Resources/Photos/pronunciation.svg" alt="Play pronunciation" />
+    </div>
+    <h2 id="hidden-word" style="display:none;">${hidden}</h2>
+  </div>
+`;
   }
 
   // 2) Build HTML shell once
@@ -1116,11 +1145,8 @@ function renderGameUI({
     if (cardEl && playBtn) {
       cardEl.style.cursor = "pointer";
       cardEl.addEventListener("click", () => {
-        playBtn.querySelector("img").style.transform = "scale(0.9)";
-        setTimeout(
-          () => (playBtn.querySelector("img").style.transform = "scale(1)"),
-          120
-        );
+        playBtn.classList.add("clicked");
+        setTimeout(() => playBtn.classList.remove("clicked"), 200);
         playWordAudio(wordObj);
       });
     }
@@ -1194,13 +1220,22 @@ async function renderClozeGameUI(
     let s = exampleSentence;
 
     for (const c of candidates) {
-      // word-boundary, case-insensitive
-      const re = new RegExp(`\\b${escapeRegExp(c)}\\b`, "i");
+      // Match any inflected or hyphenated form containing the base
+      const re = new RegExp(`\\b${escapeRegExp(c)}\\p{L}*\\b`, "iu");
       if (re.test(s)) {
         s = s.replace(re, "___");
         break;
       }
     }
+
+    // Guarantee at least one blank
+    if (!s.includes("___")) {
+      const words = s.split(/\s+/);
+      if (words.length > 0) {
+        s = s.replace(words[0], "___");
+      }
+    }
+
     sentenceWithBlank = s || "";
   }
 
