@@ -1747,6 +1747,10 @@ async function handleListeningAnswer(selectedTranslation, wordObj) {
     correctCount++;
     correctStreak++;
     updateRecentAnswers(true);
+
+    totalQuestions++;
+    questionsAtCurrentLevel++;
+
     correctlyAnsweredWords.push(wordObj.ord);
 
     // ✅ Outside repair mode — remove if it was reintroduced
