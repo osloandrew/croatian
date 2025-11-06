@@ -149,40 +149,29 @@ function showBanner(type, level) {
   let message = "";
 
   if (type === "congratulations") {
-    const randomIndex = Math.floor(
-      Math.random() * congratulationsMessages.length
-    );
-    message = congratulationsMessages[randomIndex].replace("{X}", level);
+    message = pickRandom(congratulationsMessages)?.replace("{X}", level);
     bannerHTML = `<div class="game-congratulations-banner"><p>${message}</p></div>`;
   } else if (type === "fallback") {
-    const randomIndex = Math.floor(Math.random() * fallbackMessages.length);
-    message = fallbackMessages[randomIndex].replace("{X}", level);
+    message = pickRandom(fallbackMessages)?.replace("{X}", level);
     bannerHTML = `<div class="game-fallback-banner"><p>${message}</p></div>`;
   } else if (type === "streak") {
-    const randomIndex = Math.floor(Math.random() * streakMessages.length);
-    message = streakMessages[randomIndex].replace("{X}", level);
+    message = pickRandom(streakMessages)?.replace("{X}", level);
     bannerHTML = `<div class="game-streak-banner"><p>${message}</p></div>`;
   } else if (type === "clearedPracticeWords") {
-    const randomIndex = Math.floor(
-      Math.random() * clearedPracticeMessages.length
-    );
-    message = clearedPracticeMessages[randomIndex];
+    message = pickRandom(clearedPracticeMessages);
     bannerHTML = `<div class="game-cleared-practice-banner"><p>${message}</p></div>`;
   } else if (type === "levelLock") {
     const messages =
       level === "locked"
         ? lockToggleMessages.locked
         : lockToggleMessages.unlocked;
-    const randomIndex = Math.floor(Math.random() * messages.length);
-    message = messages[randomIndex];
+    message = pickRandom(messages);
     bannerHTML = `<div class="game-lock-banner"><p>${message}</p></div>`;
   } else if (type === "enterRepair") {
-    const randomIndex = Math.floor(Math.random() * enterRepairMessages.length);
-    message = enterRepairMessages[randomIndex];
+    message = pickRandom(enterRepairMessages);
     bannerHTML = `<div class="game-repair-enter-banner"><p>${message}</p></div>`;
   } else if (type === "exitRepair") {
-    const randomIndex = Math.floor(Math.random() * exitRepairMessages.length);
-    message = exitRepairMessages[randomIndex];
+    message = pickRandom(exitRepairMessages);
     bannerHTML = `<div class="game-repair-exit-banner"><p>${message}</p></div>`;
   }
   bannerPlaceholder.innerHTML = bannerHTML;
@@ -438,8 +427,7 @@ async function startWordGame() {
                 !noRandom.includes(w)
             );
           while (uniqueWords.length < 4 && fallbackPool.length > 0) {
-            const candidate =
-              fallbackPool[Math.floor(Math.random() * fallbackPool.length)];
+            const candidate = pickRandom(fallbackPool);
             if (!uniqueWords.includes(candidate)) uniqueWords.push(candidate);
           }
         }
@@ -558,8 +546,7 @@ async function startWordGame() {
               );
 
             while (uniqueWords.length < 4 && fallbackPool.length > 0) {
-              const candidate =
-                fallbackPool[Math.floor(Math.random() * fallbackPool.length)];
+              const candidate = pickRandom(fallbackPool);
               if (!uniqueWords.includes(candidate)) uniqueWords.push(candidate);
             }
           }
@@ -701,7 +688,11 @@ async function startWordGame() {
 
   console.log(
     "Showing " +
-      ((questionType === "cloze") === "cloze" ? "CLOZE" : "FLASHCARD") +
+      (questionType === "cloze"
+        ? "CLOZE"
+        : questionType === "listening"
+        ? "LISTENING"
+        : "FLASHCARD") +
       " question for:",
     randomWordObj.ord
   );
@@ -843,8 +834,7 @@ async function startWordGame() {
         );
 
       while (uniqueWords.length < 4 && fallbackPool.length > 0) {
-        const candidate =
-          fallbackPool[Math.floor(Math.random() * fallbackPool.length)];
+        const candidate = pickRandom(fallbackPool);
         if (!uniqueWords.includes(candidate)) {
           uniqueWords.push(candidate);
         }
@@ -1004,6 +994,15 @@ function buildCEFRLabel(level) {
   return `<div class="game-cefr-label ${cls}">${level}</div>`;
 }
 
+function pickRandom(arr) {
+  if (!Array.isArray(arr) || arr.length === 0) return undefined;
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function escapeRegExp(str) {
+  return String(str).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function shortGenderLabel(gender = "") {
   const map = {
     noun: "Noun",
@@ -1026,505 +1025,211 @@ function shortGenderLabel(gender = "") {
   return map[key] || gender;
 }
 
-function renderWordGameUI(wordObj, translations, isReintroduced = false) {
-  // Add the word object to the data store and get its index
+function renderGameUI({
+  mode, // "flashcard" | "cloze" | "listening"
+  wordObj,
+  translations, // array of strings
+  isReintroduced = false,
+  clozedWordForm = "", // only for cloze
+  englishTranslation = "", // optional
+  sentenceWithBlank = "",
+}) {
   const wordId = wordDataStore.push(wordObj) - 1;
-
-  // Split the word at the comma and use the first part
-  let displayedWord = wordObj.ord.split(",")[0].trim();
-  let displayedGender = shortGenderLabel(wordObj.gender);
-
-  // Check if CEFR is selected; if not, add a label based on wordObj.CEFR
-  let cefrLabel = "";
-  const firstTrickyLabelPlaceholder =
-    '<div class="game-tricky-word" style="visibility: hidden;"><i class="fa fa-repeat" aria-hidden="true"></i></div>';
-  const secondTrickyLabel = isReintroduced
+  const cefrLabel = buildCEFRLabel(wordObj.CEFR);
+  const displayedGender = shortGenderLabel(wordObj.gender);
+  const tricky = isReintroduced
     ? '<div class="game-tricky-word visible"><i class="fa fa-repeat" aria-hidden="true"></i></div>'
-    : '<div class="game-tricky-word" style="visibility: hidden;"><i class="fa fa-repeat" aria-hidden="true"></i></div>';
+    : '<div class="game-tricky-word" style="visibility:hidden;"><i class="fa fa-repeat" aria-hidden="true"></i></div>';
 
-  cefrLabel = buildCEFRLabel(wordObj.CEFR);
-
-  // Create placeholder for banners (this will be dynamically updated when banners are shown)
-  let bannerPlaceholder = '<div id="game-banner-placeholder"></div>';
-
-  gameContainer.innerHTML = `
-        <!-- Session Stats Section -->
-        <div class="game-stats-content" id="game-session-stats">
-            <!-- Stats will be updated dynamically in renderStats() -->
+  // 1) Mode-specific inner content for the .game-word area
+  let wordAreaHTML = "";
+  if (mode === "flashcard") {
+    const displayedWord = wordObj.ord.split(",")[0].trim();
+    wordAreaHTML = `<h2>${displayedWord}</h2>`;
+  } else if (mode === "cloze") {
+    const shown = sentenceWithBlank || "___";
+    wordAreaHTML = `<h2 id="cloze-sentence">${shown}</h2>`; // no English in cloze UI
+  } else if (mode === "listening") {
+    const hidden = wordObj.ord.split(",")[0].trim();
+    wordAreaHTML = `
+      <div style="display:flex;justify-content:center;align-items:center;min-height:80px;">
+        <div id="listening-audio-button" class="audio-button" style="cursor:pointer;display:block;">
+          <img src="Resources/Photos/pronunciation.svg" alt="Play pronunciation" style="width:64px;height:64px;filter:invert(0);transition:transform 0.1s ease;" />
         </div>
-
-        <div class="game-word-card">
-            <div class="game-labels-container">
-              <div class="game-label-subgroup">
-              <div class="game-gender">${displayedGender}</div>
-                ${cefrLabel}  <!-- Add the CEFR label here if applicable -->
-              </div>
-                ${bannerPlaceholder}  <!-- This is where banners will appear dynamically -->
-                <div class="game-label-subgroup">
-                  ${secondTrickyLabel}
-                  <div class="game-gender" style="visibility: hidden;">${displayedGender}</div>
-                </div>
-            </div>
-            <div class="game-word">
-                <h2>${displayedWord}</h2>
-            </div>
-            <div class="game-cefr-spacer"></div>
-        </div>
-
-        <!-- Translations Grid Section -->
-        <div class="game-grid">
-            ${translations
-              .map(
-                (translation, index) => `
-                <div class="game-translation-card" data-id="${wordId}" data-index="${index}">
-                    ${translation.split(",")[0].trim()}
-                </div>
-            `
-              )
-              .join("")}
-        </div>
-
-        <!-- Next Word Button -->
-        <div class="game-next-button-container">
-            <button id="game-next-word-button" disabled>Next Word</button>
-        </div>
+        <h2 id="hidden-word" style="display:none;">${hidden}</h2>
+      </div>
     `;
+  }
 
-  // Add event listeners for translation cards
+  // 2) Build HTML shell once
+  gameContainer.innerHTML = `
+    <div class="game-stats-content" id="game-session-stats"></div>
+
+    <div class="game-word-card">
+      <div class="game-labels-container">
+        <div class="game-label-subgroup">
+          <div class="game-gender">${displayedGender}</div>
+          ${cefrLabel}
+        </div>
+        <div id="game-banner-placeholder"></div>
+        <div class="game-label-subgroup">
+          ${tricky}
+        </div>
+      </div>
+
+      <div class="game-word">
+        ${wordAreaHTML}
+      </div>
+
+      <div class="game-cefr-spacer"></div>
+    </div>
+
+    <div class="game-grid">
+      ${translations
+        .map(
+          (t, i) => `
+          <div class="game-translation-card" data-id="${wordId}" data-index="${i}">
+            ${t.split(",")[0].trim()}
+          </div>`
+        )
+        .join("")}
+    </div>
+
+    <div class="game-next-button-container">
+      <button id="game-next-word-button" disabled>Next Word</button>
+    </div>
+  `;
+
+  // 3) Common bindings
+  document
+    .getElementById("game-next-word-button")
+    .addEventListener("click", async () => {
+      stopAllAudio();
+      hideAllBanners();
+      await startWordGame();
+    });
+
+  // Mode-specific bindings
+  if (mode === "listening") {
+    const cardEl = document.querySelector(".game-word-card");
+    const playBtn = document.getElementById("listening-audio-button");
+    if (cardEl && playBtn) {
+      cardEl.style.cursor = "pointer";
+      cardEl.addEventListener("click", () => {
+        playBtn.querySelector("img").style.transform = "scale(0.9)";
+        setTimeout(
+          () => (playBtn.querySelector("img").style.transform = "scale(1)"),
+          120
+        );
+        playWordAudio(wordObj);
+      });
+    }
+  }
+
+  // 4) Card click handlers mapped by mode
   document.querySelectorAll(".game-translation-card").forEach((card) => {
     card.addEventListener("click", function () {
-      const wordId = this.getAttribute("data-id"); // Retrieve the word ID
-      const selectedTranslation = this.innerText.trim();
-      const wordObj = wordDataStore[wordId]; // Get the word object from the data store
+      const id = this.getAttribute("data-id");
+      const selected = this.innerText.trim();
+      const wo = wordDataStore[id];
 
-      handleTranslationClick(selectedTranslation, wordObj, "flashcard");
+      if (mode === "listening") {
+        handleListeningAnswer(selected, wo);
+      } else {
+        // pass the questionType so the cloze behavior after a correct answer still updates the sentence
+        const qType = mode === "cloze" ? "cloze" : "flashcard";
+        handleTranslationClick(selected, wo, qType);
+      }
     });
   });
 
-  // Add event listener for the next word button
-  document
-    .getElementById("game-next-word-button")
-    .addEventListener("click", async function () {
-      stopAllAudio();
-      hideAllBanners(); // Hide all banners when Next Word is clicked
-      await startWordGame(); // Move to the next word
-    });
+  renderStats();
 
-  renderStats(); // Ensure stats are drawn once DOM is fully loaded
-  playWordAudio(wordObj);
+  // 5) Auto audio behavior parity with existing functions
+  if (mode === "listening") {
+    playWordAudio(wordObj);
+  } else if (mode === "flashcard") {
+    playWordAudio(wordObj); // ✅ restore word audio for flashcards
+    displayPronunciation(wordObj);
+  } else {
+    displayPronunciation(wordObj);
+  }
 }
 
-function renderClozeGameUI(
+function renderWordGameUI(wordObj, translations, isReintroduced = false) {
+  renderGameUI({
+    mode: "flashcard",
+    wordObj,
+    translations,
+    isReintroduced,
+  });
+}
+
+async function renderClozeGameUI(
   wordObj,
   translations,
   clozedWordForm,
   isReintroduced = false,
   englishTranslation = ""
 ) {
-  const blank = "___";
-  const wordId = wordDataStore.push(wordObj) - 1;
-  let cefrLabel = buildCEFRLabel(wordObj.CEFR);
-  let baseWord = wordObj.ord.split(",")[0].trim().toLowerCase(); // keep this
-  if (wordObj.gender.startsWith("expression") && baseWord.includes(" ")) {
-    // preserve the full expression (e.g., "dogoditi se")
-    baseWord = wordObj.ord.trim().toLowerCase();
-  }
-  const matchingEntry = results.find(
-    (r) =>
-      r.ord.toLowerCase() === wordObj.ord.toLowerCase() &&
-      r.gender === wordObj.gender &&
-      r.CEFR === wordObj.CEFR
-  );
-  const exampleText = matchingEntry?.eksempel || "";
-  const englishText = wordObj.sentenceTranslation || "";
+  // 1) Get the best example sentence + its translation (if present)
+  const baseWord = wordObj.ord.split(",")[0].trim();
+  let exampleSentence = "";
+  let sentenceTranslation = "";
 
-  const croatianSentences = exampleText
-    .split(/(?<=[.!?])\s+/)
-    .filter((s) => s.trim() !== "");
-  const englishSentences = englishText
-    .split(/(?<=[.!?])\s+/)
-    .filter((s) => s.trim() !== "");
-
-  let firstCroatian = "[Croatian Sentence Not Found]";
-  // Quick fix for multi-word nouns like "Sjeverna Amerika"
-  if (wordObj.eksempel && wordObj.eksempel.toLowerCase().includes(baseWord))
-    firstCroatian = wordObj.eksempel;
-  let matchingEnglish = "";
-
-  for (let i = 0; i < croatianSentences.length; i++) {
-    const nSent = croatianSentences[i];
-    const lower = nSent.toLowerCase().normalize("NFC");
-    const base = baseWord.toLowerCase().normalize("NFC");
-    const isExpression = wordObj.gender === "expression";
-
-    if (isExpression && baseWord.endsWith(" se")) {
-      const verbBase = baseWord.replace(/\s+se$/, "");
-      const tokens = nSent.match(/[\p{L}-]+/gu) || [];
-      let found = false;
-      for (let i = 0; i < tokens.length; i++) {
-        const t = tokens[i].toLowerCase();
-        const next = tokens[i + 1]?.toLowerCase();
-        // verb + se
-        if (matchesInflectedForm(verbBase, t, "verb") && next === "se")
-          found = true;
-        // se + verb
-        if (t === "se" && matchesInflectedForm(verbBase, next, "verb"))
-          found = true;
-        if (found) {
-          firstCroatian = nSent;
-          break;
-        }
-      }
-    } else {
-      const tokens = nSent.match(/[\p{L}-]+/gu) || [];
-      for (const token of tokens) {
-        const clean = token.toLowerCase().replace(/[.,!?;:()"]/g, "");
-        if (matchesInflectedForm(base, clean, wordObj.gender)) {
-          firstCroatian = nSent;
-          const matchingIndex = croatianSentences.findIndex(
-            (s) => s === firstCroatian
-          );
-          matchingEnglish =
-            matchingIndex >= 0 ? englishSentences[matchingIndex] || "" : "";
-          break;
-        }
-      }
-      if (firstCroatian !== "[Croatian Sentence Not Found]") break;
+  try {
+    const fetched = await fetchExampleSentence(wordObj); // returns { exampleSentence, sentenceTranslation }
+    if (fetched) {
+      exampleSentence = fetched.exampleSentence || "";
+      sentenceTranslation = fetched.sentenceTranslation || "";
     }
+  } catch (e) {
+    // silently continue; we'll fall back below
   }
 
-  // Try to find and blank the cloze target
-  let clozeTarget = null;
-  const lowerBaseWord = baseWord.toLowerCase();
+  // 2) Build the cloze sentence: prefer the actual clozed form; fall back to base lemma
+  let sentenceWithBlank = "";
+  if (exampleSentence) {
+    const candidates = [clozedWordForm, baseWord].filter(Boolean);
+    let s = exampleSentence;
 
-  if (
-    wordObj.gender.startsWith("expression") ||
-    (wordObj.gender.startsWith("interjection") && baseWord.includes(" "))
-  ) {
-    if (baseWord.endsWith(" se")) {
-      const verbBase = baseWord.replace(/\s+se$/, "");
-      const tokens = firstCroatian.match(/[\p{L}-]+/gu) || [];
-
-      for (let i = 0; i < tokens.length; i++) {
-        const token = tokens[i].toLowerCase();
-        const next = tokens[i + 1]?.toLowerCase();
-        const prev = tokens[i - 1]?.toLowerCase();
-
-        // Case 1: verb + se
-        if (matchesInflectedForm(verbBase, token, "verb") && next === "se") {
-          clozeTarget = tokens[i] + " " + tokens[i + 1];
-          break;
-        }
-
-        // Case 2: se + verb
-        if (token === "se" && matchesInflectedForm(verbBase, next, "verb")) {
-          clozeTarget = tokens[i] + " " + tokens[i + 1];
-          break;
-        }
-
-        // ✅ Case 3: se precedes verb but separated by punctuation (rare)
-        if (
-          token === "se" &&
-          matchesInflectedForm(verbBase, tokens[i + 2]?.toLowerCase(), "verb")
-        ) {
-          clozeTarget = tokens[i] + " " + tokens[i + 2];
-          break;
-        }
-
-        // ✅ Case 4: verb precedes se but separated by punctuation
-        if (
-          matchesInflectedForm(verbBase, token, "verb") &&
-          tokens[i + 2]?.toLowerCase() === "se"
-        ) {
-          clozeTarget = tokens[i] + " " + tokens[i + 2];
-          break;
-        }
-      }
-
-      // ✅ If still no match, fallback to verb-only but force-attach "se"
-      if (!clozeTarget) {
-        const verbMatch = tokens.find((t) =>
-          matchesInflectedForm(verbBase, t.toLowerCase(), "verb")
-        );
-        if (verbMatch) {
-          clozeTarget = `${verbMatch} se`;
-        }
-      }
-    } else {
-      const parts = baseWord.split(/\s+/); // e.g. ["dobro","jutro"]
-      const tokens = firstCroatian.match(/[\p{L}-]+/gu) || [];
-
-      for (let i = 0; i <= tokens.length - parts.length; i++) {
-        const slice = tokens
-          .slice(i, i + parts.length)
-          .map((t) => t.toLowerCase());
-        if (slice.join(" ") === baseWord.toLowerCase()) {
-          clozeTarget = tokens.slice(i, i + parts.length).join(" ");
-          break;
-        }
-      }
-
-      // still allow substring fallback if not found
-      if (!clozeTarget && baseWord.length > 2) {
-        const normalizedSentence = firstCroatian.normalize("NFC").toLowerCase();
-        if (normalizedSentence.includes(baseWord.toLowerCase())) {
-          clozeTarget = baseWord;
-        }
-      }
-    }
-  } else {
-    const tokens = firstCroatian.match(/[\p{L}-]+/gu) || [];
-
-    for (const token of tokens) {
-      const clean = token.toLowerCase().replace(/[.,!?;:()"]/g, "");
-      if (matchesInflectedForm(lowerBaseWord, clean, wordObj.gender)) {
-        clozeTarget = token;
+    for (const c of candidates) {
+      // word-boundary, case-insensitive
+      const re = new RegExp(`\\b${escapeRegExp(c)}\\b`, "i");
+      if (re.test(s)) {
+        s = s.replace(re, "___");
         break;
       }
     }
+    sentenceWithBlank = s || "";
   }
 
-  let sentenceWithBlank;
+  // 3) Prefer the function’s englishTranslation arg, otherwise use paired sentenceTranslation
+  const english =
+    englishTranslation && englishTranslation.trim()
+      ? englishTranslation
+      : sentenceTranslation;
 
-  console.log("[CLOZE] Base:", baseWord);
-  console.log("[CLOZE] Sentence:", firstCroatian);
-  console.log("[CLOZE] Found target:", clozeTarget);
-
-  if (clozeTarget) {
-    correctTranslation = clozeTarget;
-    wordObj.clozeAnswer = clozeTarget.trim(); // ✅ store the discovered full answer, e.g. "igrati se"
-    sentenceWithBlank = firstCroatian.replace(clozeTarget, blank);
-  } else {
-    console.warn("❌ No cloze target found — switching to flashcard fallback.");
-
-    correctTranslation = wordObj.engelsk; // ✅ Fix the root bug
-
-    // Regenerate English options
-    const incorrectTranslations = fetchIncorrectTranslations(
-      wordObj.gender,
-      wordObj.engelsk,
-      currentCEFR
-    );
-
-    const allTranslations = shuffleArray([
-      wordObj.engelsk,
-      ...incorrectTranslations,
-    ]);
-    const uniqueDisplayedTranslations =
-      ensureUniqueDisplayedValues(allTranslations);
-
-    renderWordGameUI(wordObj, uniqueDisplayedTranslations, false);
-    return;
+  // ✅ Ensure sentenceWithBlank really contains the blank
+  if (sentenceWithBlank && !sentenceWithBlank.includes("___")) {
+    const base = clozedWordForm || wordObj.ord.split(",")[0].trim();
+    const re = new RegExp(`\\b${escapeRegExp(base)}\\b`, "i");
+    sentenceWithBlank = sentenceWithBlank.replace(re, "___");
   }
 
-  // --- Normalize reflexive 'se' options so they match the sentence ---
-  let options = translations.map((t) => t.trim());
-  if (baseWord.endsWith(" se") && clozeTarget) {
-    const targetIsSeFirst = /^se\b/i.test(clozeTarget); // "se odmaramo" vs "odmaramo se"
-    const targetParts = clozeTarget.split(/\s+/);
-    const targetVerb = targetIsSeFirst ? targetParts[1] : targetParts[0];
+  // 4) Make sure the evaluator compares Croatian→Croatian
+  wordObj.clozeAnswer = clozedWordForm;
 
-    // 1) Drop any stray single "se" option
-    options = options.filter((opt) => opt.toLowerCase() !== "se");
-
-    // 2) Make se-position consistent with the sentence's target
-    options = options.map((opt) => {
-      const hasSeFirst = /^se\b/i.test(opt);
-      const hasSeLast = /\bse$/i.test(opt);
-      if (targetIsSeFirst && hasSeLast) {
-        // "igram se" -> "se igram"
-        return ("se " + opt.replace(/\s*se$/i, "").trim()).trim();
-      }
-      if (!targetIsSeFirst && hasSeFirst) {
-        // "se igramo" -> "igramo se"
-        return (opt.replace(/^se\s+/i, "").trim() + " se").trim();
-      }
-      return opt;
-    });
-
-    // 3) Match morphology to the target form: infinitive OR finite person/number
-    const targetIsInfinitive = /(ti|ći)$/.test(targetVerb);
-
-    // classify and stem helpers (reuse for both branches)
-    const classOf = (form) => {
-      if (/(am|aš|amo|ate|aju|a)$/.test(form)) return "A"; // -ati class
-      if (/(im|iš|imo|ite|i)$/.test(form)) return "I"; // -iti class
-      if (
-        /(em|eš|emo|ete|ju|u|e)$/.test(form) &&
-        !/(am|aš|amo|ate|aju)$/.test(form)
-      )
-        return "E";
-      return null;
-    };
-    const stripEnding = (form) =>
-      form.replace(
-        /(amo|emo|imo|ate|ete|ite|aju|ju|am|em|im|aš|eš|iš|a|e|i|je|u)$/,
-        ""
-      );
-
-    if (targetIsInfinitive) {
-      // ➜ Target is like "se kupati": force distractors to **infinitive**
-      options = options.map((opt) => {
-        const parts = opt.split(/\s+/);
-        const vIx = /^se\b/i.test(opt) ? 1 : 0; // verb slot
-        if (!parts[vIx]) return opt;
-
-        const verbForm = parts[vIx];
-        if (/(ti|ći)$/.test(verbForm)) return opt; // already infinitive
-
-        const cls = classOf(verbForm);
-        const stem = stripEnding(verbForm);
-
-        // build an infinitive from a present stem (light heuristics)
-        let inf;
-        if (cls === "A") inf = stem + "ati";
-        else if (cls === "I") inf = stem + "iti";
-        else {
-          // E-class is messy: many are actually -ati or -jeti in the lemma.
-          // Favor -ati for stems ending in -j / -ij (smij- → smijati),
-          // and for common -ov/-ev patterns try zvati (zov- → zvati) as a nudge.
-          if (/(ij|j)$/.test(stem)) inf = stem + "ati"; // smij- → smijati
-          else if (/ov$|ev$/i.test(stem))
-            inf = stem.slice(0, -2) + "vati"; // zov- → zvati, pev- → pevati
-          else inf = stem + "iti"; // safer fallback than "eti"
-        }
-
-        parts[vIx] = inf;
-        return parts.join(" ");
-      });
-    } else {
-      // ➜ Target is finite: keep your existing finite-person/number matcher
-      const targetEnding = (targetVerb.match(
-        /(amo|emo|imo|ate|ete|ite|aju|ju|am|em|im|aš|eš|iš|a|e|i|je|u)$/
-      ) || [null])[0];
-
-      if (targetEnding) {
-        const buildWithTarget = (stem, cls, tgtEnd) => {
-          let end = tgtEnd;
-          if (end === "je" && !/(ij|smij|nij)$/.test(stem)) end = "e";
-          if (end === "u") end = cls === "E" ? "u" : cls === "A" ? "aju" : "ju";
-          if (/^(a|e|i)$/.test(end)) {
-            if (cls === "A") end = "a";
-            else if (cls === "I") end = "i";
-            else if (cls === "E") end = end === "i" ? "e" : end;
-          }
-          return stem + end;
-        };
-
-        options = options.map((opt) => {
-          const parts = opt.split(/\s+/);
-          const vIx = /^se\b/i.test(opt) ? 1 : 0;
-          if (!parts[vIx]) return opt;
-
-          const verbForm = parts[vIx];
-          const cls = classOf(verbForm);
-          const stem = stripEnding(verbForm);
-          parts[vIx] = stem
-            ? buildWithTarget(stem, cls, targetEnding)
-            : verbForm;
-          return parts.join(" ");
-        });
-      }
-    }
-
-    // 4) Guarantee the discovered target is in the options set
-    const cleanFound = clozeTarget.trim();
-    const provided = (clozedWordForm || "").trim();
-    options = options.map((opt) => (opt === provided ? cleanFound : opt));
-    if (!options.includes(cleanFound)) {
-      // Put the correct form in and keep 4 unique choices
-      options[0] = cleanFound;
-      options = ensureUniqueDisplayedValues(shuffleArray(options));
-      if (options.length > 4) options = options.slice(0, 4);
-    }
-  } else {
-    // Non-reflexive: keep what's already computed
-    options = translations;
-  }
-
-  // --- Capitalize or lowercase all options based on whether the blank starts the sentence ---
-  const blankIndex = sentenceWithBlank.indexOf("___");
-  const capitalize =
-    blankIndex === 0 || /^[\s"“'(]*___/.test(sentenceWithBlank);
-  options = options.map(
-    (o) =>
-      o.charAt(0)[capitalize ? "toUpperCase" : "toLowerCase"]() + o.slice(1)
-  );
-  if (wordObj.clozeAnswer)
-    wordObj.clozeAnswer =
-      wordObj.clozeAnswer
-        .charAt(0)
-        [capitalize ? "toUpperCase" : "toLowerCase"]() +
-      wordObj.clozeAnswer.slice(1);
-
-  gameContainer.innerHTML = `
-    <!-- Session Stats Section -->
-    <div class="game-stats-content" id="game-session-stats">
-      <!-- Stats will be updated dynamically in renderStats() -->
-    </div>
-  
-    <div class="game-word-card">
-      <div class="game-labels-container">
-        <div class="game-label-subgroup">
-      <div class="game-gender">${shortGenderLabel(
-        wordObj.gender
-      )}</div>          ${cefrLabel}
-        </div>
-        <div id="game-banner-placeholder"></div>
-        <div class="game-label-subgroup">
-          <div class="game-tricky-word" style="${
-            isReintroduced ? "visibility: visible;" : "visibility: hidden;"
-          }">
-            <i class="fa fa-repeat" aria-hidden="true"></i>
-          </div>
-          <div class="game-gender" style="visibility: hidden;"></div>
-        </div>
-      </div>
-  
-      <div class="game-word">
-      <h2 id="cloze-sentence">${sentenceWithBlank}</h2>        <p class="game-english-translation" style="display: inline;">${matchingEnglish}</p> 
-      </div>
-  
-      <div class="game-cefr-spacer"></div>
-    </div>
-  
-    <!-- Translations Grid Section -->
-    <div class="game-grid">
-      ${options
-        .map(
-          (translation, index) => `
-          <div class="game-translation-card" data-id="${wordId}" data-index="${index}">
-            ${translation}
-          </div>
-        `
-        )
-        .join("")}
-    </div>
-  
-    <!-- Next Word Button -->
-    <div class="game-next-button-container">
-      <button id="game-next-word-button" disabled>Next Word</button>
-    </div>
-  `;
-
-  document.querySelectorAll(".game-translation-card").forEach((card) => {
-    card.addEventListener("click", function () {
-      const wordId = this.getAttribute("data-id");
-      const selectedTranslation = this.innerText.trim();
-      const wordObj = wordDataStore[wordId];
-      handleTranslationClick(selectedTranslation, wordObj, "cloze"); // true = cloze mode
-    });
+  // 5) Delegate to the unified renderer
+  renderGameUI({
+    mode: "cloze",
+    wordObj,
+    translations,
+    isReintroduced,
+    clozedWordForm,
+    englishTranslation: english,
+    sentenceWithBlank,
   });
-
-  document
-    .getElementById("game-next-word-button")
-    .addEventListener("click", async function () {
-      stopAllAudio();
-      hideAllBanners();
-      await startWordGame();
-    });
-
-  renderStats(); // Ensure stats bar is present after cloze loads too
 }
 
 // ───────────────── 6) Event Handlers ─────────────────
@@ -1926,97 +1631,12 @@ async function fetchExampleSentence(wordObj) {
 }
 
 function renderListeningGameUI(wordObj, translations, isReintroduced = false) {
-  const wordId = wordDataStore.push(wordObj) - 1;
-
-  const cefrLabel = buildCEFRLabel(wordObj.CEFR);
-  const displayedGender = shortGenderLabel(wordObj.gender);
-  const secondTrickyLabel = isReintroduced
-    ? '<div class="game-tricky-word visible"><i class="fa fa-repeat" aria-hidden="true"></i></div>'
-    : '<div class="game-tricky-word" style="visibility:hidden;"><i class="fa fa-repeat" aria-hidden="true"></i></div>';
-
-  gameContainer.innerHTML = `
-    <div class="game-stats-content" id="game-session-stats"></div>
-
-    <div class="game-word-card">
-      <div class="game-labels-container">
-        <div class="game-label-subgroup">
-          <div class="game-gender">${displayedGender}</div>
-          ${cefrLabel}
-        </div>
-        <div id="game-banner-placeholder"></div>
-      <div class="game-label-subgroup">
-        ${secondTrickyLabel}
-      </div>
-      </div>
-
-<div class="game-word" style="display:flex;justify-content:center;align-items:center;min-height:80px;">
-  <div id="listening-audio-button" class="audio-button" style="cursor:pointer;display:block;">
-    <img src="Resources/Photos/pronunciation.svg"
-         alt="Play pronunciation"
-         style="width:64px;height:64px;filter:invert(0);transition:transform 0.1s ease;" />
-  </div>
-  <h2 id="hidden-word" style="display:none;">${wordObj.ord
-    .split(",")[0]
-    .trim()}</h2>
-</div>
-
-      <div class="game-cefr-spacer"></div>
-    </div>
-
-    <div class="game-grid">
-      ${translations
-        .map(
-          (t, i) => `
-        <div class="game-translation-card" data-id="${wordId}" data-index="${i}">
-          ${t.split(",")[0].trim()}
-        </div>
-      `
-        )
-        .join("")}
-    </div>
-
-    <div class="game-next-button-container">
-      <button id="game-next-word-button" disabled>Next Word</button>
-    </div>
-  `;
-
-  // 🎧 Make the whole top card clickable for audio playback
-  const card = document.querySelector(".game-word-card");
-  const playBtn = document.getElementById("listening-audio-button");
-
-  if (card && playBtn) {
-    card.style.cursor = "pointer";
-    card.addEventListener("click", () => {
-      // quick press animation for feedback
-      playBtn.querySelector("img").style.transform = "scale(0.9)";
-      setTimeout(
-        () => (playBtn.querySelector("img").style.transform = "scale(1)"),
-        120
-      );
-      playWordAudio(wordObj);
-    });
-  }
-  // 🧩 Set up translation card handlers
-  document.querySelectorAll(".game-translation-card").forEach((card) => {
-    card.addEventListener("click", function () {
-      const wordId = this.getAttribute("data-id");
-      const selectedTranslation = this.innerText.trim();
-      const wordObj = wordDataStore[wordId];
-      handleListeningAnswer(selectedTranslation, wordObj);
-    });
+  renderGameUI({
+    mode: "listening",
+    wordObj,
+    translations,
+    isReintroduced,
   });
-
-  // ⏭ Next button
-  document
-    .getElementById("game-next-word-button")
-    .addEventListener("click", async () => {
-      stopAllAudio();
-      hideAllBanners();
-      await startWordGame();
-    });
-
-  renderStats();
-  playWordAudio(wordObj); // auto-play once on load
 }
 
 // ───────────────── 8) Data & Selection Logic ─────────────────
@@ -2085,9 +1705,7 @@ async function fetchRandomWord() {
   }
 
   // Randomly select a result from the filtered results
-  const randomResult =
-    filteredResults[Math.floor(Math.random() * filteredResults.length)];
-
+  const randomResult = pickRandom(filteredResults);
   previousWord = randomResult.ord; // Update the previous word
 
   return {
