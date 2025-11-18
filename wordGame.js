@@ -683,6 +683,7 @@ async function renderClozeQuestion(randomWordObj, uniqueDisplayedTranslations) {
         matchesInflectedForm(baseWord, joinedWithSpace, randomWordObj.gender)
       ) {
         clozedForm = group.join(" ");
+        randomWordObj._reflexiveSeFirst = clozedForm.trim().startsWith("se ");
         break;
       }
       if (
@@ -2291,10 +2292,27 @@ function matchesInflectedForm(base, token, gender) {
 
   // --- 6. Expressions (including "se" verbs) ---
   if (gender.startsWith("expression")) {
-    if (lowerBase.endsWith(" se")) {
-      const verbBase = lowerBase.replace(/\s+se$/, "");
-      if (token === "se") return true;
-      if (matchesInflectedForm(verbBase, token, "verb")) return true;
+    // --- REFLEXIVE EXPRESSIONS (verb + se, se + verb) ---
+    if (gender.startsWith("expression") && lowerBase.endsWith(" se")) {
+      const verbLemma = lowerBase.replace(/\s+se$/, ""); // "bojati", "nadati"
+      const form = lowerToken.split(/\s+/); // ["boji","se"], or ["se","boji"]
+
+      // Case A: postposed — "boji se"
+      if (form.length === 2 && form[1] === "se") {
+        if (matchesInflectedForm(verbLemma, form[0], "verb")) {
+          return true;
+        }
+      }
+
+      // Case B: preposed — "se boji"
+      if (form.length === 2 && form[0] === "se") {
+        if (matchesInflectedForm(verbLemma, form[1], "verb")) {
+          return true;
+        }
+      }
+
+      // Do NOT match stand-alone "se"
+      return false;
     }
     return lowerToken === lowerBase;
   }
